@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "esbuild": "^0.28.2",
+    "three": "^0.180.0",
+    "three-gpu-pathtracer": "^0.0.24",
+    "three-mesh-bvh": "^0.9.15"
+  },
+  "scripts": {
+    "build:study": "esbuild src/forgive-lab.js --bundle --format=esm --minify --outfile=assets/forgive-lab.js",
+    "build:app": "esbuild app.js --bundle --format=esm --minify --outfile=assets/app.bundle.js",
+    "build": "npm run build:app && npm run build:study",
+    "serve": "python3 -m http.server 4173"
+  }
+}

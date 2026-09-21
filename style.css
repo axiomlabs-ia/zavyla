@@ -304,7 +304,7 @@ details .text-link{color:var(--text)}
  max-width:var(--maxw);margin:0 auto clamp(14px,2vw,26px);padding:0 var(--pad-x);
  display:flex;align-items:flex-end;justify-content:space-between;gap:var(--gap);
 }
-.showcase-heading h2{max-width:11ch}
+.showcase-heading h2{max-width:14ch}
 
 .fragrance-rail{
  --item-width:clamp(260px,26vw,420px);
@@ -319,13 +319,13 @@ details .text-link{color:var(--text)}
  opacity:.34;transition:opacity .6s var(--ease);
 }
 .rail-bottle.is-active{opacity:1}
-.rail-bottle>span:last-child{
+.rail-bottle>span:not([class]){
  position:absolute;bottom:0;left:0;right:0;text-align:center;
  font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-3);
 }
 .rail-bottle .rail-live{position:absolute;inset:0 0 34px;touch-action:pan-y}
 .rail-bottle .rail-live canvas{width:100%;height:100%;display:block;cursor:grab}
-.rail-bottle img{height:86%;width:auto;object-fit:contain;transition:transform .7s var(--ease)}
+.rail-bottle img:not(.rail-stone){height:86%;width:auto;object-fit:contain;transition:transform .7s var(--ease)}
 .rail-placeholder{
  display:block;width:100%;height:calc(100% - 34px);
  background:radial-gradient(ellipse at 50% 55%,var(--paper-2),transparent 70%);
@@ -785,4 +785,130 @@ dialog::backdrop{background:rgba(34,31,27,.42);backdrop-filter:blur(2px)}
  *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
  .reveal{opacity:1;transform:none}
  .experience{height:100svh}
+}
+
+/* =========================================================================
+   R51 — Le aperture alternative della home (?home=pietre | materie)
+   Il disco di pietra e' il segno che il marchio usa davvero: sul sito
+   ufficiale le tredici fragranze si scelgono da una fila di minerali. La
+   texture di ogni disco e' quella del tappo, presa dal modello 3D.
+   ========================================================================= */
+
+.rail-stone{
+ position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+ width:var(--stone-size,84px);height:var(--stone-size,84px);
+ border-radius:50%;object-fit:cover;
+ box-shadow:0 10px 26px rgba(34,31,27,.16);
+ transition:width .6s var(--ease),height .6s var(--ease),opacity .45s ease;
+}
+/* Nella fila classica la pietra e' solo il segnaposto di chi non e' scelto. */
+.rail-bottle.is-active .rail-stone{opacity:0}
+.rail-bottle.has-live .rail-placeholder{display:none}
+
+/* ---------------------------- A. Le tredici pietre --------------------- */
+
+/* overflow e min-width:0 sono obbligatori: la fila e' un flex scorrevole e
+   senza questi allarga il contenitore oltre il viewport, spostando il testo. */
+.stones-hero{
+ min-height:100svh;display:flex;flex-direction:column;overflow-x:clip;
+ padding-top:clamp(22px,2.8vw,36px);
+}
+.stones-hero .fragrance-showcase{flex:1;min-width:0}
+.stones-copy{padding:0 var(--pad-x);max-width:var(--maxw);margin-inline:auto;width:100%}
+.stones-copy .eyebrow{margin-bottom:clamp(16px,2vw,24px)}
+.stones-copy h1{font-size:clamp(42px,5.2vw,84px);line-height:.95;max-width:11ch}
+.stones-copy p{margin-top:clamp(16px,2vw,26px);color:var(--text-2);max-width:46ch;font-size:15.5px}
+
+[data-home="pietre"] .fragrance-showcase{padding:clamp(18px,2.4vw,34px) 0 0;display:flex;flex-direction:column;justify-content:flex-end}
+[data-home="pietre"] .showcase-heading{display:none}
+/* La fila: dischi piccoli, e quello scelto si apre in un flacone vero. */
+[data-home="pietre"] .fragrance-rail{
+ --item-width:clamp(96px,9vw,132px);
+ align-items:flex-end;gap:clamp(6px,1vw,16px);padding-bottom:6px;
+}
+[data-home="pietre"] .rail-bottle{
+ width:var(--item-width);height:clamp(132px,14vw,186px);
+ opacity:1;align-items:end;
+ transition:width .6s var(--ease),height .6s var(--ease);
+}
+[data-home="pietre"] .rail-bottle>span:not([class]){
+ bottom:0;font-size:8.5px;letter-spacing:.1em;opacity:.55;transition:opacity .4s ease;
+}
+[data-home="pietre"] .rail-bottle .rail-stone{
+ top:auto;bottom:34px;transform:translateX(-50%);
+ --stone-size:clamp(52px,5.4vw,78px);
+}
+[data-home="pietre"] .rail-bottle.is-active{
+ width:clamp(220px,24vw,360px);height:clamp(250px,28vw,380px);
+}
+[data-home="pietre"] .rail-bottle.is-active>span:last-child{opacity:1;font-size:10px}
+[data-home="pietre"] .rail-bottle .rail-live{inset:0 0 30px}
+[data-home="pietre"] .rail-placeholder{display:none}
+[data-home="pietre"] .rail-navigation{margin:10px 0 18px}
+[data-home="pietre"] .rail-information{padding-bottom:clamp(26px,3vw,44px)}
+
+/* ------------------------------ B. Tre materie ------------------------- */
+
+/* Le tre materie escono una dopo l'altra mentre il flacone si compone:
+   --hero-reveal arriva dalla scena (0 = macro sulla pietra, 1 = ritratto). */
+.materie{
+ position:absolute;right:var(--pad-x);top:50%;transform:translateY(-50%);max-height:72svh;overflow:visible;
+ z-index:4;margin:0;padding:0;list-style:none;
+ display:flex;flex-direction:column;gap:clamp(20px,3vh,38px);
+ width:min(30%,320px);text-align:right;pointer-events:none;
+}
+.materie li{transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.materie span{
+ display:block;font-family:var(--serif);font-size:clamp(21px,1.9vw,27px);
+ line-height:1.1;margin-bottom:6px;
+}
+.materie p{font-size:12.5px;color:var(--text-2);margin-left:auto;max-width:30ch}
+/* Ogni voce si accende nel suo terzo di scorrimento e resta. */
+.materie li:nth-child(1){opacity:clamp(0,calc(var(--hero-reveal,0) * 9),1)}
+.materie li:nth-child(2){opacity:clamp(0,calc((var(--hero-reveal,0) - .30) * 9),1)}
+.materie li:nth-child(3){opacity:clamp(0,calc((var(--hero-reveal,0) - .62) * 9),1)}
+.materie li:nth-child(1){transform:translateY(calc(14px * (1 - clamp(0,calc(var(--hero-reveal,0) * 9),1))))}
+.materie li:nth-child(2){transform:translateY(calc(14px * (1 - clamp(0,calc((var(--hero-reveal,0) - .30) * 9),1))))}
+.materie li:nth-child(3){transform:translateY(calc(14px * (1 - clamp(0,calc((var(--hero-reveal,0) - .62) * 9),1))))}
+
+@media(max-width:1100px){
+ [data-home="pietre"] .rail-bottle.is-active{width:clamp(220px,40vw,340px)}
+}
+
+@media(max-width:760px){
+ .stones-hero{min-height:auto;padding-top:18px}
+ .stones-copy h1{font-size:clamp(44px,13vw,70px)}
+ .stones-copy p{font-size:14px;max-width:none}
+ [data-home="pietre"] .fragrance-rail{--item-width:74px;padding-inline:8vw;gap:6px}
+ [data-home="pietre"] .rail-bottle{height:120px}
+ [data-home="pietre"] .rail-bottle .rail-stone{--stone-size:52px;bottom:28px}
+ [data-home="pietre"] .rail-bottle.is-active{width:min(74vw,300px);height:clamp(260px,52vw,360px)}
+ [data-home="pietre"] .rail-information{grid-template-columns:1fr;gap:14px}
+
+ .materie{
+  position:static;transform:none;width:auto;text-align:left;
+  padding:0 var(--pad-x) 26px;gap:16px;margin-top:auto;
+ }
+ .materie p{margin-left:0;font-size:11.5px}
+ .materie span{font-size:19px}
+}
+
+/* Nella fila delle pietre solo la fragranza scelta mostra il flacone: le due
+   vicine restano minerali, anche se la loro scena e' gia' pronta dietro. */
+[data-home="pietre"] .rail-bottle:not(.is-active) .rail-live{opacity:0;visibility:hidden}
+[data-home="pietre"] .rail-bottle:not(.is-active) .rail-stone{opacity:1}
+[data-home="pietre"] .rail-navigation{margin:6px 0 14px}
+[data-home="pietre"] .rail-bottle>span:not([class]){
+ font-family:var(--sans);text-transform:uppercase;
+}
+
+/* Nelle "tre materie" la colonna di destra e' testo: la scena si stringe per
+   lasciarla libera, invece di far correre le didascalie sopra al vetro. */
+[data-home="materie"] #scene-host,
+[data-home="materie"] .scene-backdrop{inset:0 27% 0 0}
+[data-home="materie"] .materie{width:min(24%,300px)}
+@media(max-width:900px){
+ [data-home="materie"] #scene-host,
+ [data-home="materie"] .scene-backdrop{inset:0}
+ [data-home="materie"] .materie{width:auto}
 }

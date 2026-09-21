@@ -29,8 +29,11 @@ function createScene(host,options){
  const camera=new THREE.PerspectiveCamera(32,1,.05,60);camera.position.set(0,.12,3.15);camera.layers.enable(1);
  const fluids=[],groups=[],atmospheres=[],glassMeshes=[],liquidMeshes=[],labelMeshes=[],geometries=new Set(),materials=new Set(),textures=new Set();
  const on=(el,event,fn,opts)=>{el.addEventListener(event,fn,opts);cleanup.push(()=>el.removeEventListener(event,fn,opts))};
- function fallback(){root.querySelector('.scene-loading')?.remove();const el=root.querySelector('.scene-fallback');if(el)el.hidden=false;else host.innerHTML='<p class="empty">La vista 3D non è disponibile. Consulta la scheda ufficiale sotto.</p>'}
- try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});}catch{fallback();return}
+ function fallback(){root.querySelector('.scene-loading')?.remove();const el=root.querySelector('.scene-fallback');if(el)el.hidden=false;else host.innerHTML='<p class="empty">La vista 3D non è disponibile. Consulta la scheda ufficiale sotto.</p>';
+  // La coda del catalogo monta una scena per volta e aspetta data-ready:
+  // senza questa riga una scena fallita la blocca per sempre.
+  host.dataset.ready='true';host.dataset.failed='true'}
+ try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});}catch{fallback();return ()=>{}}
  const handheld=innerWidth<700||matchMedia('(pointer:coarse)').matches;renderer.setPixelRatio(handheld?Math.min(devicePixelRatio,isHome?1.9:1.7):isHome?Math.min(Math.max(devicePixelRatio,2),2.5):Math.min(Math.max(devicePixelRatio,1.5),2.25));renderer.info.autoReset=false;renderer.transmissionResolutionScale=handheld?.65:1;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;renderer.shadowMap.enabled=!isRail;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.setClearColor(0xf0eee7,1);renderer.clear();renderer.domElement.style.background='#f0eee7';host.append(renderer.domElement);on(renderer.domElement,'webglcontextlost',e=>{e.preventDefault();cancelAnimationFrame(raf);raf=0;prepared=false});renderer.domElement.tabIndex=0;renderer.domElement.setAttribute('aria-label','Flacone 3D: trascina o usa le frecce per ruotarlo');renderer.domElement.style.touchAction='pan-y';
  if(isRail){renderer.domElement.setAttribute('aria-label','Ruota il flacone selezionato trascinando o usando le frecce')}
  const interiorSize=new THREE.Vector2(1,1),interior=new THREE.WebGLRenderTarget(1,1,{type:THREE.HalfFloatType,minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,depthBuffer:true});interior.texture.generateMipmaps=false;interior.texture.minFilter=THREE.LinearFilter;

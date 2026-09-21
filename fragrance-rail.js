@@ -1,4 +1,4 @@
-import {mountRailBottle} from './scene.js?v=R47';
+import {mountRailBottle} from './scene.js?v=R50';
 export function mountFragranceRail(products){
  const section=document.querySelector('.fragrance-showcase');if(!section)return ()=>{};
  const track=section.querySelector('.fragrance-rail'),items=[...track.querySelectorAll('[data-fragrance-index]')],previous=section.querySelector('[data-rail-prev]'),next=section.querySelector('[data-rail-next]');

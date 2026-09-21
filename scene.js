@@ -1,13 +1,13 @@
-import {addStoneFragments} from './stone-fragments.js?v=R47';
-import {finishMacroSurface} from './macro-surface.js?v=R47';
+import {addStoneFragments} from './stone-fragments.js?v=R50';
+import {finishMacroSurface} from './macro-surface.js?v=R50';
 import * as THREE from 'three';
-import {renderBottleLayers} from './bottle-render.js?v=R47';
-import {compositionPose} from './hero-choreography.js?v=R47';
-import {createLiquidMotion} from './liquid-motion.js?v=R47';
-import {createFragranceWorld} from './fragrance-worlds.js?v=R47';
+import {renderBottleLayers} from './bottle-render.js?v=R50';
+import {compositionPose} from './hero-choreography.js?v=R50';
+import {createLiquidMotion} from './liquid-motion.js?v=R50';
+import {createFragranceWorld} from './fragrance-worlds.js?v=R50';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
-import {loadStudioEnvironment,bottleGlass,perfumeLiquid,finishSurface,addPaperEdge} from './bottle-materials.js?v=R47';
+import {loadStudioEnvironment,bottleGlass,perfumeLiquid,finishSurface,addPaperEdge} from './bottle-materials.js?v=R50';
 
 let disposeCurrent=()=>{};
 export function disposeScene(){disposeCurrent();disposeCurrent=()=>{}}
@@ -61,7 +61,7 @@ function createScene(host,options){
  on(renderer.domElement,'pointerup',()=>down=false);on(renderer.domElement,'pointercancel',()=>down=false);on(renderer.domElement,'pointerleave',()=>pointer.set(0,0));
  on(renderer.domElement,'keydown',e=>{if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home'].includes(e.key)){e.preventDefault();if(isRail)e.stopPropagation();if(e.key==='Home'){drag=0;dragY=0}else if(e.key==='ArrowUp'||e.key==='ArrowDown')dragY=clamp(dragY+(e.key==='ArrowUp'?-.12:.12),-.6,.6);else drag+=e.key==='ArrowRight'?.2:-.2}});
  on(renderer.domElement,'webglcontextlost',e=>{e.preventDefault();cancelAnimationFrame(raf);raf=0;fallback()});
- if(isHome)on(root.querySelector('[data-show-fragrances]'),'click',()=>document.querySelector('.fragrance-showcase')?.scrollIntoView({behavior:reduced.matches?'instant':'smooth',block:'start'}));
+ const jump=isHome&&root.querySelector('[data-show-fragrances]');if(jump)on(jump,'click',()=>document.querySelector('.fragrance-showcase')?.scrollIntoView({behavior:reduced.matches?'instant':'smooth',block:'start'}));
  const loader=new GLTFLoader();
  const needed=isHome?modelSlugs:[options.slug];
  Promise.all([environmentReady,...needed.map(async(slug,i)=>{const gltf=await loader.loadAsync(`assets/models/${slug}.glb`);if(dead){release(gltf.scene);geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());return}const model=gltf.scene;model.position.y=-.615;// Flacone e tubicino escono da Blender con lo stesso materiale "Vetro ottico":

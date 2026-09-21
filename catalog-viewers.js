@@ -1,4 +1,4 @@
-import {mountCatalogBottle} from './scene.js?v=R47';
+import {mountCatalogBottle} from './scene.js?v=R50';
 export function mountCatalogViewers(){
  const hosts=[...document.querySelectorAll('#catalog-grid .catalog-live')],live=new Map(),rotations=new Map(),visible=new Set(),events=new AbortController();let dead=false,timer=0;
  function remove(host){const v=live.get(host);if(!v)return;rotations.set(host,JSON.parse(host.dataset.userRotation||'{"x":0,"y":0}'));v.dispose();live.delete(host);delete host.dataset.ready;host.dataset.frames='0'}

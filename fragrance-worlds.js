@@ -1,7 +1,7 @@
-import {fragrancePose} from './fragrance-layout.js?v=R47';
+import {fragrancePose} from './fragrance-layout.js?v=R50';
 import * as THREE from 'three';
-import {createForgiveIngredients} from './forgive-ingredients.js?v=R47';
-import {createFragranceIngredients} from './fragrance-ingredients.js?v=R47';
+import {createForgiveIngredients} from './forgive-ingredients.js?v=R50';
+import {createFragranceIngredients} from './fragrance-ingredients.js?v=R50';
 import {createForgiveVolume} from './forgive-volume.js?v=R20';
 import {ingredientPose,random} from './hero-choreography.js?v=R20';
 // Motifs follow the published note pyramids in data.js; not the names of the perfumes.

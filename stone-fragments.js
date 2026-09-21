@@ -1,4 +1,4 @@
-import {fragrancePose,fragranceLayouts} from './fragrance-layout.js?v=R47';
+import {fragrancePose,fragranceLayouts} from './fragrance-layout.js?v=R50';
 import * as THREE from 'three';
 import {random} from './hero-choreography.js?v=R35';
 

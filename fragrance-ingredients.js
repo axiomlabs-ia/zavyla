@@ -1,6 +1,6 @@
-import {fragrancePose} from './fragrance-layout.js?v=R47';
+import {fragrancePose} from './fragrance-layout.js?v=R50';
 import * as THREE from 'three';
-import {createBotanicalLibrary} from './botanical-library.js?v=R47';
+import {createBotanicalLibrary} from './botanical-library.js?v=R50';
 import {ingredientPose,random} from './hero-choreography.js?v=R20';
 
 // Three selected motifs from each note pyramid in data.js. Gourmand accords

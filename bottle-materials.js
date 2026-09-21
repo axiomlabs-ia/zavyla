@@ -3,7 +3,7 @@ import {HDRLoader} from 'three/addons/loaders/HDRLoader.js';
 
 // Shared by the catalog and Forgive study; no progressive rendering here.
 // R47: l'HDRI pesa quanto un'intera pagina. Sui telefoni basta 1k, sul desktop 2k.
-export const studioEnvironmentUrl=()=>{const small=typeof innerWidth==='number'&&(innerWidth<900||matchMedia('(pointer:coarse)').matches);return `assets/forgive-study/studio-glass-${small?'1k':'2k'}.hdr?v=R47`};
+export const studioEnvironmentUrl=()=>{const small=typeof innerWidth==='number'&&(innerWidth<900||matchMedia('(pointer:coarse)').matches);return `assets/forgive-study/studio-glass-${small?'1k':'2k'}.hdr?v=R50`};
 export function loadStudioEnvironment(){return new HDRLoader().loadAsync(studioEnvironmentUrl()).then(texture=>{texture.mapping=THREE.EquirectangularReflectionMapping;return texture})}
 
 export function bottleGlass(interior,size){

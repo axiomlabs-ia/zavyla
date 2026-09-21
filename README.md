@@ -19,6 +19,30 @@ npm run serve      # http://localhost:4173
 Il sito è statico: GitHub Pages serve la radice del repository sul branch `main`.
 `node_modules/` non viene pubblicato — al suo posto c'è il bundle.
 
+## Disegno (R50)
+
+Il foglio di stile e' stato riscritto da zero: i blocchi `R##` sovrapposti si
+contraddicevano fra loro. Idea centrale: tavole stampate di un taccuino da
+profumiere. La tipografia porta il peso, le filature sono struttura, l'unica
+cosa che si muove davvero e' il flacone.
+
+- **Due caratteri, nessun Arial.** Cormorant Garamond per i display (era gia'
+  del marchio), Geist per interfaccia e testo corrente: 29 KB di sottoinsieme
+  latino, ospitato in locale, licenza OFL.
+- **Il fondo resta avorio `#f0eee7` per vincolo, non per gusto:** e' il colore
+  con cui la scena WebGL pulisce il buffer, ed e' il fondo dei render di
+  catalogo e delle foto prodotto. Un altro colore metterebbe un alone attorno a
+  ogni flacone. Accento unico: l'ametista della pietra del tappo di Forgive.
+- **Via la mobilia del browser:** triangolini di `<details>`, `<select>` di
+  sistema, anello azzurro sul contenitore di rotta a ogni navigazione.
+- **Occhielli razionati** (uno ogni tre sezioni), niente numerazione decorativa
+  delle sezioni, niente coordinate geografiche, niente invito a scorrere.
+- **Cofanetti:** quattro fotografie girate in studi diversi ora condividono
+  almeno la stessa inquadratura 4:3 e la stessa struttura di scheda.
+- In home barra e intestazione galleggiano sopra la scena, che parte da zero:
+  prima la hero era alta un viewport ma cominciava 114 px piu' in basso e il suo
+  piede finiva sotto la piega.
+
 ## Mobile (R47)
 
 - Il titolo della home ha un velo di carta sopra la scena, che esce insieme al

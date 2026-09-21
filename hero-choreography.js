@@ -3,13 +3,39 @@ export const ease=x=>{x=clamp(x);return x*x*(3-2*x)};
 // One viewport, no pinned chapters. Slow shared motion plus a small scroll response.
 export function compositionPose(p,i,mobile=false,time=0,aspect=1.5){
  const halfWidth=Math.tan(16*Math.PI/180)*(mobile?3.8:3.08)*aspect;
- // A macro shot of the stone cap opens into the complete bottle in half a viewport.
+ // Tre tempi in un viewport: la pietra da sola, il montaggio, il ritratto.
  const reveal=ease(p),drift=Math.sin(time*.22)*.018;
+ // Il corpo arriva dopo la pietra e ruota di piu' di mezzo giro mentre sale,
+ // cosi' lo scorrimento e' un movimento e non uno zoom.
+ const turn=ease(clamp((p-.18)/.66));
  return {x:halfWidth*(mobile?.20:.39)*(1-reveal*.14),
   y:(mobile?-1.72:-.91)*(1-reveal)+(mobile?-.20:-.10)*reveal,
   z:0,scale:(mobile?2.62:2.65)*(1-reveal)+(mobile?.86:1.04)*reveal,
-  rotation:-.30*(1-reveal)+drift,pitch:.025*(1-reveal),
+  rotation:-.30*(1-reveal)+(1-turn)*-1.95+drift,pitch:.025*(1-reveal),
   tilt:-.32*(1-reveal)-.10*reveal};
+}
+
+// Il montaggio: la pietra resta sospesa e gira su se stessa, poi scende sul
+// collo con un piccolo assestamento. Il resto del flacone la raggiunge da sotto.
+const easeOutBack=x=>{const c=1.7;return 1+ (c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+export function assemblyPose(p,mobile=false){
+ const seat=clamp((p-.26)/.52);
+ const settle=seat>=1?1:easeOutBack(seat);
+ const rise=ease(clamp(p/.42));
+ return {
+  // quota della pietra sopra il collo, in unita' del modello
+  capY:(1-settle)*(mobile?.30:.34),
+  // poco piu' di mezzo giro mentre scende, poi ferma
+  capSpin:(1-ease(seat))*2.1,
+  // il corpo entra da sotto nel primo tempo
+  bodyY:(1-rise)*-.16,
+  // il pulviscolo parte largo e si raccoglie attorno al flacone
+  spread:1.52-.52*ease(p),
+  // la luce dello studio scorre sulla materia mentre si compone
+  light:.65+ease(p)*.85,
+  // l'essenza sale nel flacone mentre il corpo si monta
+  fill:.08+.92*ease(clamp((p-.10)/.56)),
+ };
 }
 export const random=i=>{const n=Math.sin(i*127.1+19.7)*43758.5453;return n-Math.floor(n)};
 // Two asymmetric streams of ingredients. No clock, emission, resets or ballistic launches.

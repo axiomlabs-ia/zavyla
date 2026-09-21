@@ -3,8 +3,29 @@ import {HDRLoader} from 'three/addons/loaders/HDRLoader.js';
 
 // Shared by the catalog and Forgive study; no progressive rendering here.
 // R47: l'HDRI pesa quanto un'intera pagina. Sui telefoni basta 1k, sul desktop 2k.
-export const studioEnvironmentUrl=()=>{const small=typeof innerWidth==='number'&&(innerWidth<900||matchMedia('(pointer:coarse)').matches);return `assets/forgive-study/studio-glass-${small?'1k':'2k'}.hdr?v=R50`};
-export function loadStudioEnvironment(){return new HDRLoader().loadAsync(studioEnvironmentUrl()).then(texture=>{texture.mapping=THREE.EquirectangularReflectionMapping;return texture})}
+// R52: le scene piccole (fila, catalogo) usano sempre 1k: un flacone alto 300 px
+// non si accorge della differenza, ma la costruzione della mappa d'ambiente
+// costa uguale, e in una fila se ne aprono tre per volta.
+export const studioEnvironmentUrl=small=>{
+ const little=small||(typeof innerWidth==='number'&&(innerWidth<900||matchMedia('(pointer:coarse)').matches));
+ return `assets/forgive-study/studio-glass-${little?'1k':'2k'}.hdr?v=R50`;
+};
+// R52: la stessa mappa veniva scaricata e decodificata da ogni scena, ed e' la
+// voce piu' cara dell'avvio. Ora si decodifica una volta sola e ogni scena
+// riceve una copia che condivide i pixel: il contesto WebGL di ciascuna carica
+// comunque la sua texture, quindi ognuna resta padrona della propria e puo'
+// smaltirla senza spegnere i riflessi alle altre.
+const ambienti=new Map();
+export function loadStudioEnvironment(small){
+ const url=studioEnvironmentUrl(small);
+ if(!ambienti.has(url))ambienti.set(url,new HDRLoader().loadAsync(url));
+ return ambienti.get(url).then(sorgente=>{
+  const texture=sorgente.clone();
+  texture.mapping=THREE.EquirectangularReflectionMapping;
+  texture.needsUpdate=true;
+  return texture;
+ });
+}
 
 export function bottleGlass(interior,size){
  const mat=new THREE.MeshPhysicalMaterial({color:0xffffff,roughness:.022,metalness:0,transmission:1,thickness:.018,ior:1.47,attenuationColor:new THREE.Color('#eff5ef'),attenuationDistance:3,envMapIntensity:.48,side:THREE.FrontSide});

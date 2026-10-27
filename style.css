@@ -2191,17 +2191,40 @@ main>.banda-scura.distesa:last-child{margin-bottom:var(--sec-y)}
 /* Il flacone fotografato al posto della scena viva (solo touchscreen). */
 .rail-bottle .rail-live .rail-foto{display:block;width:100%;height:100%;object-fit:contain;transform:none}
 
-/* Le pietre tornano a cavallo fra manifesto e tappi anche sul telefono: una
-   fila sola che si scorre col dito, invece di due righe chiuse nel crema. */
+/* Le pietre a cavallo fra manifesto e tappi, con il nome sotto ogni
+   tappo (R175: Stefano vuole il nome sempre, non solo al passaggio del mouse).
+   L'ombra e' un ovale disegnato sotto la pietra: il drop-shadow veniva
+   tagliato dal bordo della fila che scorre e usciva quadrato. */
+.hz-pietre a{-webkit-tap-highlight-color:transparent}
+.hz-pietre a::before{
+ content:'';position:absolute;z-index:-1;left:14%;right:14%;
+ top:calc(var(--pietra) * .84);height:calc(var(--pietra) * .2);
+ background:radial-gradient(closest-side,rgb(6 4 6 / .55),transparent);
+}
+.hz-pietre img{filter:none}
+.hz-pietre a{isolation:isolate}
+.hz-pietre span{
+ position:static;opacity:1;transform:none;white-space:normal;text-align:center;
+ width:var(--pietra);font-size:13px;line-height:1.15;color:var(--on-ink);
+}
+.hz-manifesto{padding-bottom:calc(var(--sec-y) + var(--pietra) * .7 + 44px)}
+.hz-pietre{bottom:calc(var(--pietra) * -.5 - 24px)}
+.hz-tappi{--pietra:clamp(46px,5.6vw,92px);padding-top:calc(var(--sec-y) + var(--pietra) * .6 + 50px)}
+
 @media (max-width:560px){
- .hz-manifesto{--pietra:58px;padding-bottom:calc(var(--sec-y) + 34px)}
+ .hz-manifesto{--pietra:78px;padding-bottom:calc(var(--sec-y) + 40px)}
  .hz-pietre{
   position:absolute;left:0;right:0;bottom:calc(var(--pietra) * -.5 - 40px);margin:0;
-  flex-wrap:nowrap;justify-content:flex-start;gap:12px;
+  flex-wrap:nowrap;justify-content:flex-start;gap:16px;
   overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scrollbar-width:none;
-  padding:16px var(--pad-x) 40px;
+  padding:18px var(--pad-x) 16px;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 28px,#000 calc(100% - 56px),transparent);
+  mask-image:linear-gradient(90deg,transparent 0,#000 28px,#000 calc(100% - 56px),transparent);
  }
+ .hz-pietre.a-inizio{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 56px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 56px),transparent)}
+ .hz-pietre.a-fine{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 28px);mask-image:linear-gradient(90deg,transparent 0,#000 28px)}
  .hz-pietre::-webkit-scrollbar{display:none}
  .hz-pietre li{flex:none;scroll-snap-align:center}
- .hz-tappi{padding-top:calc(var(--sec-y) + 40px)}
+ .hz-pietre span{display:block;width:calc(var(--pietra) + 14px);font-size:14px}
+ .hz-tappi{--pietra:78px;padding-top:calc(var(--sec-y) + var(--pietra) * .5 + 70px)}
 }

@@ -44,6 +44,12 @@
  --d2:clamp(36px,4.6vw,68px);
  --d3:clamp(27px,2.6vw,40px);
  --d4:clamp(21px,1.7vw,27px);
+ /* Due sole misure per il testo corrente di tutto il sito: il corpo di
+    lettura e la riga di guida sotto al titolo. Le pagine nate dopo la home
+    ne avevano inventate quattro (14.5 / 15.5 / 17 / 19), e il ritmo della
+    lettura cambiava a ogni navigazione. */
+ --testo:clamp(14.5px,1.05vw,15.5px);
+ --guida:clamp(16px,1.35vw,18px);
 
  /* ritmo */
  --pad-x:clamp(20px,5vw,68px);
@@ -299,7 +305,8 @@ details .text-link{color:var(--text)}
 
 /* ======================= HOME — IL BINARIO DELLE 13 ===================== */
 
-.fragrance-showcase{padding:var(--sec-y) 0 calc(var(--sec-y) * .7)}
+.fragrance-showcase{position:relative;overflow:hidden;
+ padding:calc(var(--sec-y) * .55) 0 calc(var(--sec-y) * .7)}
 .showcase-heading{
  max-width:var(--maxw);margin:0 auto clamp(14px,2vw,26px);padding:0 var(--pad-x);
  display:flex;align-items:flex-end;justify-content:space-between;gap:var(--gap);
@@ -307,23 +314,52 @@ details .text-link{color:var(--text)}
 .showcase-heading h2{max-width:14ch}
 
 .fragrance-rail{
- --item-width:clamp(260px,26vw,420px);
- display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;
- padding:10px var(--pad-x) 0;scrollbar-width:none;
+ /* Tutte le caselle hanno la STESSA larghezza, sempre. Farla crescere solo
+    sulla fragranza scelta creava un anello chiuso: la larghezza del centro
+    dipendeva da chi fosse attivo, chi fosse attivo dalla posizione di
+    scorrimento, e la posizione dalla larghezza. Misurato: lo scorrimento non
+    si fermava mai. Il tappo e' piccolo dentro la sua casella larga, quindi i
+    vicini restano lontani lo stesso. */
+ --item-width:clamp(290px,25vw,450px);
+ --scena:min(92vw, clamp(430px,40vw,720px));
+ --stone-size:clamp(44px,4.3vw,68px);
+ display:flex;gap:0;overflow-x:auto;overscroll-behavior-x:contain;
+ /* I due capi devono poter arrivare al centro della pista, altrimenti lo
+    scroll si ferma prima e le fragranze di testa e di coda non vengono mai
+    selezionate: con il solo var(--pad-x) ne restavano fuori quattro su 13. */
+ /* Il margine va calcolato sull'elemento STRETTO: agli estremi la fragranza
+    e' ancora un tappo, e solo diventando centrale si allarga. Dimensionarlo
+    sul centro largo lasciava di nuovo fuori le ultime tre. */
+ padding:10px max(var(--pad-x), calc(50% - var(--item-width) / 2)) 0;
+ scrollbar-width:none;
 }
 .fragrance-rail::-webkit-scrollbar{display:none}
 .rail-bottle{
- flex:none;width:var(--item-width);height:clamp(340px,calc(100svh - 330px),660px);
- position:relative;scroll-snap-align:center;
+ flex:none;width:var(--item-width);height:clamp(300px,calc(100svh - 360px),580px);
+ position:relative;
  display:grid;place-items:center;
- opacity:.34;transition:opacity .6s var(--ease);
+ opacity:.62;transition:opacity .5s var(--ease);
 }
+/* Solo la fragranza al centro mostra la boccetta, e le viene dato lo spazio
+   che le serve: la sua canvas si allarga con l'elemento, e le materie che
+   gia' disegna dietro di se' si distribuiscono su tutta quella larghezza
+   invece di restare strette attorno al vetro. Le altre restano il tappo. */
 .rail-bottle.is-active{opacity:1}
+.rail-bottle:not(.is-active) .rail-live{opacity:0;visibility:hidden}
+.rail-bottle:not(.is-active) .rail-stone{opacity:1;top:auto;bottom:12%;transform:translateX(-50%)}
+.rail-bottle .rail-live{transition:opacity .5s var(--ease)}
 .rail-bottle>span:not([class]){
  position:absolute;bottom:0;left:0;right:0;text-align:center;
- font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-3);
+ font-family:var(--serif);font-size:clamp(14px,1.05vw,17px);
+ letter-spacing:.005em;text-transform:none;color:var(--text-3);
 }
+/* Sotto la fragranza scelta il nome e' gia' scritto grande di fianco: qui
+   sarebbe la stessa parola due volte. */
+.rail-bottle.is-active>span:not([class]){opacity:0}
 .rail-bottle .rail-live{position:absolute;inset:0 0 34px;touch-action:pan-y}
+.rail-bottle.is-active .rail-live{
+ left:50%;right:auto;width:var(--scena);translate:-50% 0;
+}
 .rail-bottle .rail-live canvas{width:100%;height:100%;display:block;cursor:grab}
 .rail-bottle img:not(.rail-stone){height:86%;width:auto;object-fit:contain;transition:transform .7s var(--ease)}
 .rail-placeholder{
@@ -344,15 +380,33 @@ details .text-link{color:var(--text)}
 .rail-navigation button:hover:not(:disabled){border-color:var(--ink);color:var(--ink);background:var(--paper-2)}
 .rail-navigation button:disabled{opacity:.3;cursor:not-allowed}
 
+/* La scheda sta ACCANTO al flacone, non in una fascia staccata in fondo: si
+   impila sulla fila nella stessa cella di griglia, e lascia libera al centro
+   una colonna della larghezza del flacone. */
+.rail-palco{display:grid}
+.rail-palco > *{grid-area:1 / 1}
 .rail-information{
- max-width:var(--maxw);margin-inline:auto;padding:24px var(--pad-x) 0;
- border-top:1px solid var(--line);
- display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:clamp(20px,3vw,44px);align-items:start;
+ z-index:2;pointer-events:none;align-self:center;
+ max-width:var(--maxw);margin-inline:auto;width:100%;padding:0 var(--pad-x);
+ display:grid;
+ grid-template-columns:1fr clamp(220px,19vw,300px) 1fr;
+ grid-template-rows:auto auto;
+ column-gap:clamp(14px,1.7vw,28px);row-gap:10px;align-content:center;
 }
+.rail-information a,.rail-information button{pointer-events:auto}
+.rail-identity{grid-column:1;grid-row:1;text-align:right;justify-self:end;max-width:22ch}
+.rail-story{grid-column:1;grid-row:2;text-align:right;justify-self:end;max-width:31ch}
+.rail-detail{grid-column:3;grid-row:1 / 3;justify-self:start;align-self:center;
+ display:flex;align-items:center;font-size:14px}
 .rail-identity h3{font-size:var(--d3);margin-top:8px}
+.rail-identity h3::after{left:auto;right:0}
 .rail-tagline{font-family:var(--serif);font-style:italic;font-size:var(--d4);line-height:1.25;color:var(--text-2)}
-.rail-notes{margin-top:10px;font-size:12.5px;color:var(--text-3);letter-spacing:.02em}
-.rail-detail{display:flex;flex-direction:column;align-items:flex-end;gap:14px;font-size:14px}
+.rail-descrizione{
+ margin-top:12px;font-size:13.5px;line-height:1.6;color:var(--text-2);
+ text-wrap:pretty;
+}
+/* Sopra una fotografia il testo ha bisogno di un appoggio per restare leggibile. */
+.fragrance-showcase .rail-information{text-shadow:0 1px 18px rgba(8,6,6,.55)}
 
 /* ====================== HOME — LA MAISON IN BREVE ======================= */
 
@@ -429,6 +483,10 @@ details .text-link{color:var(--text)}
 .catalog-live{position:absolute;inset:0;display:block;touch-action:pan-y}
 .catalog-live canvas{display:block;width:100%;height:100%;cursor:grab}
 .catalog-live canvas:active{cursor:grabbing}
+/* La tessera e' un filmato in ciclo reso fuori linea, non piu' una scena 3D:
+   `object-fit:cover` perche' il filmato ha le proporzioni della tessera al
+   momento della cattura, e una tessera puo' essere leggermente diversa. */
+.catalog-live img{display:block;width:100%;height:100%;object-fit:cover}
 .catalog-loading{
  position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;
  font:italic 400 19px var(--serif);color:var(--text-3);
@@ -737,7 +795,8 @@ dialog::backdrop{background:rgba(34,31,27,.42);backdrop-filter:blur(2px)}
  .fragrance-showcase{padding:calc(var(--sec-y) * .8) 0}
  .showcase-heading{flex-direction:column;align-items:flex-start;gap:14px}
  .showcase-heading>.text-link{font-size:10px;white-space:nowrap}
- .fragrance-rail{--item-width:min(84vw,330px);gap:6px;padding-inline:8vw}
+ .fragrance-rail{--item-width:min(84vw,330px);gap:6px;
+  padding-inline:max(8vw, calc(50% - var(--item-width) / 2))}
  .rail-bottle{height:clamp(300px,calc(100svh - 360px),460px)}
  .rail-information{grid-template-columns:1fr;gap:16px}
  .rail-detail{flex-direction:row;justify-content:space-between;align-items:center}
@@ -879,7 +938,8 @@ dialog::backdrop{background:rgba(34,31,27,.42);backdrop-filter:blur(2px)}
  .stones-hero{min-height:auto;padding-top:18px}
  .stones-copy h1{font-size:clamp(44px,13vw,70px)}
  .stones-copy p{font-size:14px;max-width:none}
- [data-home="pietre"] .fragrance-rail{--item-width:74px;padding-inline:8vw;gap:6px}
+ [data-home="pietre"] .fragrance-rail{--item-width:74px;gap:6px;
+  padding-inline:max(8vw, calc(50% - var(--item-width) / 2))}
  [data-home="pietre"] .rail-bottle{height:120px}
  [data-home="pietre"] .rail-bottle .rail-stone{--stone-size:52px;bottom:28px}
  [data-home="pietre"] .rail-bottle.is-active{width:min(74vw,300px);height:clamp(260px,52vw,360px)}
@@ -896,7 +956,7 @@ dialog::backdrop{background:rgba(34,31,27,.42);backdrop-filter:blur(2px)}
 /* Nella fila delle pietre solo la fragranza scelta mostra il flacone: le due
    vicine restano minerali, anche se la loro scena e' gia' pronta dietro. */
 [data-home="pietre"] .rail-bottle:not(.is-active) .rail-live{opacity:0;visibility:hidden}
-[data-home="pietre"] .rail-bottle:not(.is-active) .rail-stone{opacity:1}
+[data-home="pietre"] .rail-bottle:not(.is-active) .rail-stone{opacity:1;top:auto;bottom:12%;transform:translateX(-50%)}
 [data-home="pietre"] .rail-navigation{margin:6px 0 14px}
 [data-home="pietre"] .rail-bottle>span:not([class]){
  font-family:var(--sans);text-transform:uppercase;
@@ -911,4 +971,1211 @@ dialog::backdrop{background:rgba(34,31,27,.42);backdrop-filter:blur(2px)}
  [data-home="materie"] #scene-host,
  [data-home="materie"] .scene-backdrop{inset:0}
  [data-home="materie"] .materie{width:auto}
+}
+
+
+/* ===================== IL COLORE DELLA FRAGRANZA =======================
+   Ogni profumo ha il colore della propria resina, misurato sulle foto di
+   prodotto ufficiali. Il sito lo teneva in data.js e non lo mostrava da
+   nessuna parte tranne un velo nella scheda prodotto: tredici fragranze
+   con la stessa faccia color crema.
+
+   Qui la fila diventa un palco scuro del colore della fragranza scelta.
+   Schiarire la crema con quel colore dava fango (un marrone al 30% su
+   avorio e' beige sporco); su fondo profondo lo stesso colore e' pieno, e
+   il flacone di vetro ci galleggia sopra invece di sparirci dentro.
+   E' l'unico salto di tema della pagina, ed e' voluto. */
+
+/* La ricetta del fondo sta in una proprieta' sola: la fila della home e le
+   bande scure delle altre pagine devono restare lo stesso materiale, e due
+   copie della stessa formula divergono alla prima modifica. Le var() dentro
+   si risolvono sull'elemento che la usa, quindi ogni banda porta il proprio
+   colore. */
+.fragrance-showcase,.banda-scura{
+ --fragranza:#6c5345;
+ /* Il colore, portato in profondita' invece che diluito nel bianco. */
+ --palco:#492e20;
+ --palco-fondo:color-mix(in oklab, var(--palco) 30%, #181516);
+ background:
+  radial-gradient(64% 46% at 50% 88%,
+   color-mix(in oklab, var(--fragranza) 38%, transparent), transparent 74%),
+  linear-gradient(176deg,
+   color-mix(in oklab, var(--palco-fondo) 72%, var(--paper)) 0%,
+   var(--palco-fondo) 6%,
+   color-mix(in oklab, var(--palco) 58%, #1a1718) 56%,
+   var(--palco-fondo) 100%);
+ color:#f2ece4;
+ transition:background 1.1s var(--ease);
+}
+.fragrance-showcase .showcase-heading h2,
+.fragrance-showcase .rail-identity h3,
+.fragrance-showcase .rail-tagline{color:#f6f1ea}
+.fragrance-showcase .eyebrow,
+.fragrance-showcase .rail-notes,
+.fragrance-showcase .rail-bottle>span:not([class]),
+.fragrance-showcase [data-rail-count],
+.fragrance-showcase [data-rail-price]{color:color-mix(in oklab,#f6f1ea 62%, transparent)}
+
+.banda-scura .eyebrow,.banda-scura .brand-place{color:color-mix(in oklab,#f6f1ea 62%, transparent)}
+.banda-scura .text-link{color:#f6f1ea;text-decoration-color:color-mix(in oklab,#f6f1ea 55%, transparent)}
+.banda-scura .btn{background:var(--on-ink);color:var(--ink)}
+.banda-scura .btn:hover{background:#fff}
+.fragrance-showcase .rail-navigation button{color:#f6f1ea;border-color:color-mix(in oklab,#f6f1ea 34%, transparent)}
+.fragrance-showcase .text-link{color:#f6f1ea;text-decoration-color:color-mix(in oklab,#f6f1ea 55%, transparent)}
+
+/* La fotografia delle materie prime della fragranza scelta, dietro a tutto.
+   Serve a dare profondita' alla sezione senza competere con il flacone: sta
+   sotto, e al centro si ritira per lasciargli il campo libero. */
+.fragrance-showcase::before,
+.fragrance-showcase::after{
+ content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+ background-size:cover;background-position:center;
+ mix-blend-mode:screen;filter:saturate(.85);
+ -webkit-mask-image:radial-gradient(50% 58% at 50% 46%, transparent 0%, #000 82%),
+                    linear-gradient(180deg,transparent 0,#000 14%,#000 70%,transparent 94%);
+ mask-image:radial-gradient(50% 58% at 50% 46%, transparent 0%, #000 82%),
+            linear-gradient(180deg,transparent 0,#000 14%,#000 70%,transparent 94%);
+ -webkit-mask-composite:source-in;mask-composite:intersect;
+ /* Due strati che si danno il cambio: cambiare l'immagine su un solo livello
+    la faceva comparire di scatto, senza passaggio. */
+ opacity:0;transition:opacity 1.1s var(--ease);
+ transform:scale(1.08);
+ animation:respiro-aroma 46s ease-in-out infinite;
+}
+@keyframes respiro-aroma{
+ 0%  {transform:scale(1.08) translate3d(0,0,0)}
+ 50% {transform:scale(1.14) translate3d(-1.4%,-1%,0)}
+ 100%{transform:scale(1.08) translate3d(0,0,0)}
+}
+.fragrance-showcase::before{background-image:var(--aroma-a,none)}
+.fragrance-showcase::after{background-image:var(--aroma-b,none)}
+.fragrance-showcase[data-strato="a"]::before,
+.fragrance-showcase[data-strato="b"]::after{opacity:.19}
+.fragrance-showcase > *{position:relative;z-index:1}
+@media (prefers-reduced-motion: reduce){
+ .fragrance-showcase::before,.fragrance-showcase::after{transition:none;animation:none}
+}
+
+.rail-identity h3{position:relative;padding-bottom:10px}
+.rail-identity h3::after{
+ content:"";position:absolute;left:0;bottom:0;height:2px;width:2.2em;
+ background:color-mix(in oklab, var(--fragranza) 70%, #fff);
+ transition:background .9s var(--ease);
+}
+
+@media (prefers-reduced-motion: reduce){
+ .fragrance-showcase,.rail-bottle::before,.rail-identity h3::after{transition:none}
+}
+
+
+
+
+
+/* Sotto i 900px le tre colonne non ci stanno: la scheda tornerebbe sopra al
+   flacone, illeggibile. Si rimette sotto la fila, in colonna. */
+@media(max-width:900px){
+ .rail-palco{display:block}
+ .rail-information{
+  position:static;pointer-events:auto;align-self:auto;
+  grid-template-columns:1fr;grid-template-rows:auto;
+  padding:20px var(--pad-x) 0;row-gap:10px;text-shadow:none;
+ }
+ .rail-identity,.rail-story{grid-column:1;text-align:left;justify-self:start;max-width:none}
+ .rail-identity{grid-row:1}
+ .rail-story{grid-row:2}
+ .rail-detail{grid-column:1;grid-row:3;justify-self:start;align-self:auto;
+  flex-direction:row;align-items:center;justify-content:space-between;width:100%}
+ .rail-identity h3::after{left:0;right:auto}
+}
+
+/* Nella fila il segnaposto non serve: i tappi hanno gia' la loro immagine, e
+   il suo gradiente chiaro su fondo scuro si vedeva come un alone dietro a
+   ciascuno. */
+.fragrance-showcase .rail-placeholder{background:none}
+
+/* ===================== LE SCHEDE OLFATTIVE E LA STAMPA =================
+   Pagine di lettura: colonna stretta, ritmo verticale ampio, nessuna card.
+   Il materiale e' lungo, quindi la gerarchia la fanno spazio e misura della
+   riga, non riquadri. */
+
+.note-indice{
+ max-width:var(--maxw);margin-inline:auto;padding:0 var(--pad-x);
+ display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+ gap:clamp(4px,.6vw,10px);
+}
+.note-voce{
+ display:grid;grid-template-columns:62px 1fr auto;align-items:center;
+ gap:clamp(14px,1.6vw,22px);padding:clamp(16px,1.8vw,24px) 6px;
+ border-bottom:1px solid var(--line);color:inherit;
+ transition:padding-left .35s var(--ease),border-color .35s ease;
+}
+.note-voce:hover{padding-left:16px;border-bottom-color:var(--text-3)}
+.note-voce img{width:62px;height:62px;border-radius:50%;object-fit:cover}
+.note-voce h2{font-size:clamp(21px,1.9vw,27px);line-height:1.1}
+.note-voce p{margin-top:3px;font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--text-3)}
+.note-voce span{font-size:15px;color:var(--text-3)}
+
+.nota-testa{
+ max-width:var(--maxw);margin-inline:auto;
+ padding:clamp(26px,4vw,52px) var(--pad-x) clamp(20px,3vw,38px);
+}
+.nota-testa h1{font-size:var(--d1);line-height:.95;margin:6px 0 0}
+.nota-occhiello{
+ margin-top:14px;font-family:var(--serif);font-style:italic;
+ font-size:clamp(19px,2vw,27px);color:var(--text-2);max-width:30ch;
+}
+.nota-intro{margin-top:18px;max-width:62ch;font-size:16px;line-height:1.72;color:var(--text-2)}
+
+.piramide{
+ max-width:var(--maxw);margin-inline:auto;padding:0 var(--pad-x);
+ display:grid;gap:clamp(26px,3.4vw,52px);
+}
+.piramide article{
+ display:grid;grid-template-columns:auto 1fr;gap:clamp(18px,2.6vw,46px);
+ align-items:start;padding-top:clamp(20px,2.6vw,36px);border-top:1px solid var(--line);
+}
+.piramide-grado{
+ font-family:var(--serif);font-size:clamp(28px,3.4vw,50px);
+ font-variant-numeric:lining-nums;color:var(--text-3);line-height:1;
+}
+.piramide h2{font-size:clamp(19px,1.7vw,24px);margin-bottom:10px}
+.piramide p{max-width:68ch;font-size:15.5px;line-height:1.75;color:var(--text-2)}
+
+.nota-coda{
+ max-width:var(--maxw);margin-inline:auto;padding:0 var(--pad-x);
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+ gap:clamp(22px,3vw,48px);
+}
+.nota-coda h3{font-size:16px;margin-bottom:9px}
+.nota-coda p{font-size:14.5px;line-height:1.72;color:var(--text-2)}
+
+.nota-chiusura{
+ max-width:var(--maxw);margin:clamp(34px,5vw,74px) auto 0;
+ padding:clamp(26px,3.4vw,46px) var(--pad-x);
+ border-top:1px solid var(--line);
+ display:flex;align-items:center;justify-content:space-between;
+ gap:clamp(20px,3vw,44px);flex-wrap:wrap;
+}
+.nota-chiusura h2{font-size:clamp(26px,2.6vw,40px);margin:5px 0}
+.nota-chiusura p{font-family:var(--serif);font-style:italic;color:var(--text-2)}
+
+/* La rassegna: la notizia in corso ha il suo spazio, le citazioni stanno
+   in una griglia piu' fitta. */
+.stampa-apertura{
+ max-width:var(--maxw);margin-inline:auto;padding:0 var(--pad-x);
+}
+.stampa-apertura p{
+ margin-top:12px;max-width:66ch;font-size:17px;line-height:1.7;color:var(--text-2);
+}
+.stampa-testata{
+ display:block;font-size:11px;letter-spacing:.17em;text-transform:uppercase;color:var(--text-3);
+}
+.stampa-griglia{
+ max-width:var(--maxw);margin-inline:auto;padding:0 var(--pad-x);
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));
+ gap:clamp(24px,3vw,52px) clamp(26px,3.4vw,58px);
+}
+.stampa-griglia article{padding-top:18px;border-top:1px solid var(--line)}
+.stampa-griglia p{margin-top:9px;font-size:15px;line-height:1.7;color:var(--text-2)}
+
+@media(max-width:760px){
+ .note-voce{grid-template-columns:48px 1fr auto;gap:13px}
+ .note-voce img{width:48px;height:48px}
+ .piramide article{grid-template-columns:1fr;gap:8px}
+ .nota-chiusura{flex-direction:column;align-items:flex-start}
+}
+
+/* ============ MATRIMONIO, RIVENDITORI, QUESTIONARIO, HOME =============== */
+
+.servizio{max-width:var(--maxw);margin-inline:auto;padding:0 var(--pad-x)}
+.servizio-testo{max-width:58ch;font-size:17px;line-height:1.72;color:var(--text-2)}
+.servizio-elenco{
+ margin-top:clamp(30px,4vw,60px);display:grid;
+ grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:clamp(24px,3vw,52px);
+}
+.servizio-elenco li{padding-top:18px;border-top:1px solid var(--line)}
+/* La lista e' numerata a mano (01, 02, 03): i pallini del browser la
+   numeravano una seconda volta. */
+.servizio-elenco{list-style:none;padding-left:0}
+.servizio-elenco span{
+ display:block;font-family:var(--serif);font-size:24px;color:var(--text-3);
+ font-variant-numeric:lining-nums;margin-bottom:10px;
+}
+.servizio-elenco h2{font-size:17px;margin-bottom:7px}
+.servizio-elenco p{font-size:14.5px;line-height:1.7;color:var(--text-2)}
+
+.banda-contatto{
+ max-width:var(--maxw);margin:clamp(34px,5vw,76px) auto 0;
+ padding:clamp(26px,3.4vw,46px) var(--pad-x);border-top:1px solid var(--line);
+ display:flex;align-items:center;justify-content:space-between;
+ gap:clamp(20px,3vw,44px);flex-wrap:wrap;
+}
+.banda-contatto p{font-family:var(--serif);font-style:italic;font-size:clamp(18px,1.9vw,25px);max-width:36ch}
+
+/* Il questionario: una domanda per blocco, risposte come righe da toccare. */
+.quiz{max-width:var(--maxw);margin-inline:auto;padding:0 var(--pad-x);display:grid;gap:clamp(28px,3.6vw,56px);justify-items:start}
+.quiz-passo{border:0;padding:0;min-inline-size:0;width:100%}
+.quiz-passo legend{display:flex;align-items:baseline;gap:14px;font-size:clamp(19px,1.9vw,26px);margin-bottom:16px}
+.quiz-passo legend span{font-family:var(--serif);color:var(--text-3);font-variant-numeric:lining-nums}
+.quiz-scelte{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:2px}
+.quiz-scelte label{
+ display:flex;align-items:center;gap:12px;padding:15px 16px;cursor:pointer;
+ border:1px solid var(--line);
+ font-size:14.5px;color:var(--text-2);
+ transition:border-color .25s ease,color .25s ease,background .25s ease;
+}
+.quiz-scelte label:hover{border-color:var(--text-3);color:var(--ink)}
+.quiz-scelte input{
+ appearance:none;width:15px;height:15px;flex:none;border:1px solid var(--text-3);border-radius:50%;
+ transition:border-width .2s ease,border-color .2s ease;
+}
+.quiz-scelte input:checked{border:5px solid var(--ink)}
+.quiz-scelte label:has(input:checked){border-color:var(--ink);color:var(--ink);background:var(--paper-2)}
+.quiz-scelte input:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.quiz-avviso{font-size:14px;color:#8d3b2f}
+
+/* L'esito vive sul palco scuro (.banda-scura): qui resta solo cio' che gli
+   e' proprio, il respiro sopra e il filo di colore della fragranza a lato. */
+.quiz-esito{margin-top:clamp(30px,4vw,58px);border-left:4px solid var(--fragranza)}
+.quiz-esito h2{font-size:var(--d2);margin:14px 0 4px}
+.quiz-esito .btn{margin-top:22px}
+
+/* Le due bande nuove della home. */
+.filosofia{
+ max-width:var(--maxw);margin-inline:auto;
+ padding:clamp(48px,7vw,116px) var(--pad-x);
+ display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);
+ gap:clamp(24px,4vw,70px);align-items:start;
+}
+.filosofia h2{font-size:var(--d2);line-height:1.02;max-width:12ch}
+.filosofia p{font-size:clamp(16px,1.35vw,19px);line-height:1.72;color:var(--text-2);max-width:52ch}
+
+.instagram{
+ max-width:var(--maxw);margin-inline:auto;
+ padding:clamp(30px,4vw,62px) var(--pad-x);border-top:1px solid var(--line);
+ display:flex;align-items:flex-end;justify-content:space-between;
+ gap:clamp(20px,3vw,44px);flex-wrap:wrap;
+}
+.instagram h2{font-size:clamp(24px,2.4vw,36px);margin:6px 0 8px}
+.instagram p{font-size:15px;color:var(--text-2);max-width:46ch}
+
+@media(max-width:760px){
+ .filosofia{grid-template-columns:1fr;gap:16px}
+ .banda-contatto,.instagram{flex-direction:column;align-items:flex-start}
+ .quiz-scelte{grid-template-columns:1fr}
+}
+
+/* ========================== LA NOSTRA STORIA ===========================
+   Capitoli alternati foto/testo. L'alternanza si ferma al secondo di fila:
+   al terzo capitolo la foto torna a sinistra, cosi' la pagina non diventa
+   uno zigzag meccanico. */
+
+.storia-apertura{
+ max-width:var(--maxw);margin-inline:auto;
+ padding:clamp(34px,5vw,86px) var(--pad-x) clamp(24px,3.4vw,52px);
+}
+.storia-apertura h1{font-size:var(--d1);line-height:.96;max-width:16ch;margin:6px 0 0}
+.storia-apertura p{margin-top:20px;max-width:62ch;font-size:clamp(16px,1.35vw,19px);line-height:1.72;color:var(--text-2)}
+
+.storia-capitolo{
+ max-width:var(--maxw);margin-inline:auto;
+ padding:clamp(26px,4vw,64px) var(--pad-x);
+ display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+ gap:clamp(24px,4vw,72px);align-items:center;
+}
+/* L'ordine lo decide il capitolo, non la sua posizione fra i fratelli: con
+   nth-child bastava una sezione in piu' nella pagina per invertire tutto. */
+.storia-capitolo.invertito figure{order:2}
+.storia-capitolo figure{margin:0;overflow:hidden;background:var(--paper-2)}
+.storia-capitolo img{display:block;width:100%;height:auto}
+.storia-capitolo h2{font-size:clamp(26px,2.8vw,44px);line-height:1.04;margin:7px 0 16px;max-width:16ch}
+.storia-capitolo p{max-width:54ch;font-size:15.5px;line-height:1.74;color:var(--text-2)}
+.storia-capitolo p + p{margin-top:13px}
+
+.storia-chiusura{
+ max-width:var(--maxw);margin:clamp(30px,4vw,66px) auto 0;
+ padding:clamp(28px,3.6vw,52px) var(--pad-x);border-top:1px solid var(--line);
+ display:flex;align-items:center;justify-content:space-between;
+ gap:clamp(20px,3vw,44px);flex-wrap:wrap;
+}
+.storia-chiusura p{font-family:var(--serif);font-style:italic;font-size:clamp(20px,2.2vw,30px)}
+
+@media(max-width:860px){
+ .storia-capitolo{grid-template-columns:1fr;gap:18px}
+ .storia-capitolo.invertito figure{order:0}
+ .storia-chiusura{flex-direction:column;align-items:flex-start}
+}
+
+/* Il menu completo: le tre collezioni con le loro fragranze, poi le pagine. */
+#menu{max-width:min(980px,94vw)!important;width:min(980px,94vw)}
+.menu-corpo{display:grid;gap:clamp(26px,3vw,44px)}
+.menu-collezioni{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:clamp(20px,2.6vw,40px)}
+.menu-titolo{
+ display:block;font-family:var(--serif);font-size:clamp(19px,1.8vw,24px);
+ padding-bottom:10px;margin-bottom:12px;border-bottom:1px solid var(--line);
+}
+.menu-collezioni ul{list-style:none;display:grid;gap:7px}
+.menu-collezioni a:not(.menu-titolo){font-size:14.5px;color:var(--text-2)}
+.menu-collezioni a:hover,.menu-pagine a:hover{color:var(--ink)}
+.menu-pagine{
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+ gap:10px 24px;padding-top:clamp(18px,2.4vw,30px);border-top:1px solid var(--line);
+}
+.menu-pagine a{font-size:15px;color:var(--text-2)}
+
+/* Le foto del marchio nelle pagine di servizio e nella rassegna. */
+.servizio-foto{
+ max-width:var(--maxw);margin:0 auto clamp(26px,3.4vw,52px);padding:0 var(--pad-x);
+}
+.servizio-foto img{display:block;width:100%;height:auto}
+.stampa-apertura{
+ display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.9fr);
+ gap:clamp(24px,3.4vw,56px);align-items:center;
+}
+.stampa-apertura figure{margin:0;overflow:hidden}
+.stampa-apertura figure img{display:block;width:100%;height:auto}
+.stampa-griglia figure{margin:0 0 14px;overflow:hidden;aspect-ratio:4/3;background:var(--paper-2)}
+.stampa-griglia figure img{display:block;width:100%;height:100%;object-fit:cover}
+@media(max-width:860px){.stampa-apertura{grid-template-columns:1fr}}
+
+/* =========================================================================
+   LINGUA COMUNE — le pagine interne parlano come la home
+
+   Le pagine nate dopo (storia, schede, rassegna, matrimonio, rivenditori,
+   affinita') si erano costruite un vocabolario proprio: angoli arrotondati
+   dove tutto il resto del sito e' squadrato, quattro scale di corpo testo,
+   tre intestazioni di pagina al posto di una, e nessun momento scuro — il
+   colore della fragranza, che e' l'unica cosa che distingue Zavyla, viveva
+   su una sola sezione di una sola pagina.
+
+   Qui le si riporta alla lingua della home. Niente di nuovo viene inventato:
+   si riusano l'impianto del palco, la filatura di metadati di .brand-story e
+   le misure tipografiche gia' in uso.
+   ========================================================================= */
+
+/* --- 2. Una sola misura per il testo corrente ---------------------------- */
+.storia-capitolo p,.servizio-elenco p,.piramide p,.stampa-griglia p,
+.nota-coda p,.quiz-esito p:not(.quiz-esito-famiglia),.instagram p,
+.brand-story-copy p{font-size:var(--testo);line-height:1.72}
+.storia-apertura p,.nota-intro,.servizio-testo,.filosofia p,
+.page-intro p,.maison-title p{font-size:var(--guida);line-height:1.68}
+
+/* --- 3. Le foto hanno un posto riservato prima di arrivare ---------------
+   Senza un rapporto dichiarato le immagini in lazy-load entrano a pagina
+   gia' impaginata e la spostano sotto i piedi: nella pagina storia i tre
+   capitoli non ancora visitati stavano a 372, 468 e 293 pixel invece dei
+   946 che occupano a foto arrivata, cioe' circa 1.700 pixel che si
+   aprivano sotto chi stava leggendo. Ora lo scostamento e' zero. Il taglio
+   in cover e' quello che il catalogo usa gia' su ogni scheda prodotto. */
+.storia-capitolo figure,.stampa-apertura figure{
+ aspect-ratio:4/3;overflow:hidden;background:var(--paper-2);
+}
+.storia-capitolo figure img,.stampa-apertura figure img{
+ width:100%;height:100%;object-fit:cover;
+}
+.servizio-foto{aspect-ratio:16/7;overflow:hidden;background:var(--paper-2)}
+.servizio-foto img{width:100%;height:100%;object-fit:cover}
+
+/* --- 4. La banda scura: il palco della home, fuori dalla home ------------
+   Una per pagina, sempre a tutta larghezza, sempre costruita come la fila
+   dei tredici. Non e' alternanza di tema a caso: e' lo stesso elemento che
+   ritorna, e porta il colore della fragranza di cui si sta parlando. */
+.banda-scura{
+ position:relative;
+ padding:clamp(54px,7vw,112px) var(--pad-x);
+ display:grid;gap:clamp(18px,2.4vw,34px);
+ grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+ align-items:center;
+}
+.banda-scura > * {min-width:0}
+.banda-scura h2{font-size:var(--d2);line-height:1.02;max-width:13ch}
+.banda-scura p{font-size:var(--guida);line-height:1.7;color:color-mix(in oklab,#f6f1ea 76%, transparent);max-width:50ch}
+.banda-scura .citazione{
+ font-family:var(--serif);font-style:italic;
+ font-size:clamp(22px,2.5vw,37px);line-height:1.22;color:#f6f1ea;max-width:22ch;
+}
+.banda-scura figure{margin:0;aspect-ratio:4/3;overflow:hidden;background:#17141a}
+.banda-scura figure img{width:100%;height:100%;object-fit:cover}
+/* Variante a una colonna: la chiusura di una pagina di servizio. */
+.banda-scura.distesa{
+ grid-template-columns:1fr;justify-items:start;gap:clamp(20px,2.6vw,30px);
+ padding-block:clamp(44px,5.5vw,84px);
+}
+.banda-scura.distesa .citazione{max-width:28ch}
+
+/* --- 5. La filatura di metadati, presa da .brand-story ------------------- */
+.filatura{
+ max-width:var(--maxw);margin-inline:auto;padding:0 var(--pad-x);
+ display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;
+ padding-top:clamp(12px,1.5vw,18px);border-top:1px solid var(--line);
+}
+.banda-scura .filatura{border-top-color:color-mix(in oklab,#f6f1ea 22%, transparent);padding-inline:0}
+
+@media(max-width:860px){
+ .banda-scura{grid-template-columns:1fr}
+}
+
+/* --- 6. Il capitolo a tutta larghezza ----------------------------------
+   Rompe la fila di sei righe foto/testo: la fotografia prende tutta la
+   tavola e il testo le si appoggia sotto, su due colonne come la home. */
+.storia-capitolo.ampio{grid-template-columns:1fr;gap:clamp(20px,2.6vw,34px)}
+.storia-capitolo.ampio figure{aspect-ratio:21/9}
+.ampio-testo{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);
+ gap:clamp(20px,3vw,56px);align-items:start}
+.ampio-testo .filatura{grid-column:1 / -1}
+.ampio-testo h2{align-self:start}
+@media(max-width:860px){.ampio-testo{grid-template-columns:1fr;gap:14px}}
+
+/* La filatura dentro un capitolo sta nella colonna del testo, non a pagina
+   intera: li' il margine automatico la staccherebbe dal titolo. */
+.storia-capitolo .filatura,.banda-scura .filatura{
+ max-width:none;margin:0 0 clamp(14px,1.8vw,22px);padding-inline:0;
+}
+.banda-scura .brand-year{color:#f6f1ea}
+.banda-scura h2{margin-bottom:clamp(14px,1.8vw,20px)}
+.banda-scura p + p{margin-top:13px}
+
+/* =========================================================================
+   IL COLORE ESCE DALLA HOME — catalogo e collezioni
+
+   Fuori dalla home il sito restava tredici tessere crema identiche: il
+   colore della resina, che e' l'unica cosa che distingue una fragranza
+   dall'altra, non si vedeva da nessuna parte. Ogni tessera prende ora il
+   campo della propria fragranza, costruito come il palco della fila in
+   home: il colore in profondita' e, sopra, la fotografia delle sue materie
+   prime in trasparenza.
+
+   Le tele 3D del catalogo sono gia' trasparenti (mountCatalogBottle passa
+   rail:true), quindi il flacone ci galleggia sopra senza alcun ritaglio.
+   Le foto dei flaconi in assets/products sono in PNG trasparente: le
+   tessere senza 3D usano quelle, non piu' i render su fondo avorio di
+   assets/catalog, che sul campo scuro sarebbero stati rettangoli bianchi.
+   ========================================================================= */
+
+.product-image,.collection-card{
+ --palco-fondo:color-mix(in oklab, var(--palco,#492e20) 32%, #181516);
+ background:
+  radial-gradient(72% 42% at 50% 84%,
+   color-mix(in oklab, var(--fragranza,#6c5345) 44%, transparent), transparent 76%),
+  linear-gradient(172deg,
+   color-mix(in oklab, var(--palco-fondo) 76%, #0d0c0d) 0%,
+   var(--palco-fondo) 16%,
+   color-mix(in oklab, var(--palco,#492e20) 58%, #1a1718) 64%,
+   var(--palco-fondo) 100%);
+ color:#f2ece4;
+}
+/* Le materie prime della fragranza, dietro al flacone. In "screen" il nero
+   della foto sparisce e restano solo le luci: il colore del campo non viene
+   sporcato, come nella fila in home. */
+.product-image,.collection-card{isolation:isolate}
+.product-image::after,.collection-card::after{
+ content:'';position:absolute;inset:0;pointer-events:none;
+ background-image:var(--aroma);background-size:cover;background-position:center;
+ opacity:.16;mix-blend-mode:screen;
+ /* z-index negativo dentro un contesto isolato: il velo sta sopra al fondo
+    e sotto al contenuto, senza dover toccare il position dei figli. Dando
+    position:relative ai figli diretti si rompeva l'ancoraggio di
+    .catalog-gesture e .catalog-collection, che sono in posizione assoluta. */
+ z-index:-1;
+}
+
+.product-image .catalog-collection,
+.product-image .catalog-gesture,
+.product-image .catalog-loading{color:color-mix(in oklab,#f6f1ea 66%, transparent)}
+/* Il + era un segno scuro su crema: sul campo diventa avorio su velo. */
+.product-image .quick{
+ border-color:color-mix(in oklab,#f6f1ea 40%, transparent);color:#f6f1ea;
+ background:color-mix(in oklab,#0d0c0d 42%, transparent);
+}
+.product-image .quick:hover{background:#f6f1ea;color:var(--ink)}
+
+/* La tessera della collezione: il riquadro tratteggiato e lo schiarimento al
+   passaggio erano pensati per il fondo crema. */
+.collection-card{color:#f2ece4}
+.collection-card::before{border-color:color-mix(in oklab,#f6f1ea 24%, transparent)}
+.collection-card:hover{background-color:transparent}
+.collection-card:hover::before{border-color:color-mix(in oklab,#f6f1ea 52%, transparent)}
+.collection-card .eyebrow{color:color-mix(in oklab,#f6f1ea 66%, transparent)}
+.collection-card .card-bottom{border-top-color:color-mix(in oklab,#f6f1ea 26%, transparent)}
+.collection-card .card-bottom span{color:color-mix(in oklab,#f6f1ea 70%, transparent)}
+
+/* Il flacone riempie la tessera: l'invito a ruotare gli finirebbe addosso.
+   E' un suggerimento, non contenuto, quindi compare quando serve. */
+.product-image .catalog-gesture{
+ opacity:0;transition:opacity .35s var(--ease);
+ background:color-mix(in oklab,#0d0c0d 55%, transparent);
+ padding:5px 9px;
+}
+.product-card:hover .catalog-gesture,
+.product-image:focus-within .catalog-gesture{opacity:1}
+/* L'etichetta della collezione ha bisogno di stacco sopra il vetro. */
+.product-image .catalog-collection{text-shadow:0 1px 14px rgba(8,6,6,.75)}
+
+/* La scheda prodotto: la tela 3D pulisce ora con il colore della fragranza
+   (scene.js, palcoScheda). Il riquadro sotto deve avere lo stesso colore,
+   o per un istante prima del primo fotogramma si vede la crema. */
+.detail-art{background-color:color-mix(in oklab, var(--palco,#2a2422) 92%, #0d0c0d)}
+/* Su quel fondo i due testi sovraimpressi erano inchiostro su inchiostro. */
+.detail-art .fragrance-atmosphere-note,
+.detail-art .fragrance-setting-title,
+.detail-art .rotation-hint{color:color-mix(in oklab,#f6f1ea 70%, transparent)}
+.detail-art .fragrance-setting-title{color:#f6f1ea}
+
+/* ======================= HOME — LE SEZIONI (R145) =======================
+   Sotto l'hero e la fila la home era una serie di fasce crema di solo testo.
+   Qui scende nel colore: ogni sezione prende il fondo da un tappo vero
+   (`--fragranza` e `--palco` da data.js, messi in linea dal markup) e lo
+   porta in profondita' invece di diluirlo nel bianco, come gia' fa la fila.
+   Ritmo: viola (manifesto) → nero resina (tappi) → avorio (collezioni, il
+   respiro) → petrolio (maison) → terracotta (incontro) → avorio (instagram)
+   → inchiostro (footer). Le tredici pietre cuciono manifesto e tappi.
+   Tutto vive sotto `.hz`: nessuna regola globale cambia per colpa di questo
+   blocco (l'errore del giro R143 era stato proprio quello). */
+
+.hz{
+ --hz-fondo:color-mix(in oklab, var(--palco,#221f1b) 62%, #120d10);
+ --hz-testo:#f3ede5;
+ --hz-testo-2:color-mix(in oklab, #f3ede5 72%, transparent);
+ position:relative;color:var(--hz-testo);
+ padding-block:var(--sec-y);padding-inline:var(--pad-x);
+}
+.hz .hz-dentro{max-width:var(--maxw);margin-inline:auto}
+.hz .eyebrow{color:var(--hz-testo-2)}
+.hz h2 em{color:color-mix(in oklab, var(--fragranza,#c9b48d) 45%, #f3ede5)}
+.hz p{font-size:var(--guida);line-height:1.7;color:var(--hz-testo-2)}
+.hz img{display:block;width:100%;height:100%;object-fit:cover}
+.hz figure{margin:0;overflow:hidden}
+
+/* --- Manifesto: viola Forgive, titolo enorme, le pietre sul bordo ------- */
+.hz-manifesto{
+ background:
+  radial-gradient(70% 60% at 82% 18%, color-mix(in oklab, var(--fragranza) 70%, transparent), transparent 70%),
+  linear-gradient(170deg, color-mix(in oklab, var(--palco) 80%, #1a0f1a), var(--hz-fondo) 78%);
+ padding-bottom:calc(var(--sec-y) + var(--pietra) * .7);
+ --pietra:clamp(46px,5.6vw,92px);
+ z-index:2;
+}
+.hz-manifesto .hz-dentro{
+ display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);
+ gap:clamp(24px,4vw,72px);align-items:end;
+}
+.hz-manifesto .eyebrow{grid-column:1/-1}
+.hz-manifesto h2{font-size:clamp(52px,8.2vw,138px);line-height:.92;letter-spacing:-.04em;margin-top:-.04em}
+.hz-manifesto p{padding-bottom:.6em;max-width:44ch}
+
+.hz-pietre{
+ list-style:none;margin:0;padding:0;
+ position:absolute;left:0;right:0;bottom:calc(var(--pietra) * -.5);
+ display:flex;justify-content:center;gap:clamp(4px,1vw,16px);flex-wrap:wrap;
+ padding-inline:var(--pad-x);z-index:3;
+}
+.hz-pietre li{transform:translateY(calc(sin(var(--i) * .62rad) * var(--pietra) * .16))}
+.hz-pietre a{display:grid;justify-items:center;gap:8px;position:relative}
+.hz-pietre img{
+ width:var(--pietra);height:var(--pietra);object-fit:contain;
+ filter:drop-shadow(0 10px 16px color-mix(in oklab, var(--fragranza) 40%, #000 60%));
+ transition:transform .6s var(--ease);
+}
+.hz-pietre span{
+ position:absolute;top:calc(100% + 6px);white-space:nowrap;
+ font:italic 400 15px/1 var(--serif);color:var(--on-ink);
+ opacity:0;transform:translateY(-4px);transition:opacity .35s ease,transform .45s var(--ease);
+ pointer-events:none;
+}
+.hz-pietre a:hover img,.hz-pietre a:focus-visible img{transform:translateY(-10px) scale(1.08)}
+.hz-pietre a:hover span,.hz-pietre a:focus-visible span{opacity:1;transform:none}
+
+/* --- Tappi: nero resina, collage asimmetrico ----------------------------- */
+.hz-tappi{
+ background:
+  radial-gradient(40% 50% at 12% 70%, rgba(176,40,96,.20), transparent 70%),
+  radial-gradient(36% 46% at 92% 20%, rgba(0,110,114,.22), transparent 70%),
+  #141012;
+ padding-top:calc(var(--sec-y) + clamp(46px,5.6vw,92px) * .6);
+}
+.hz-tappi .hz-dentro{
+ display:grid;grid-template-columns:repeat(12,minmax(0,1fr));
+ gap:var(--gap);align-items:center;
+}
+.hz-tappi-grande{grid-column:1/9;grid-row:1;aspect-ratio:3/2}
+/* Il cubo sta nella stessa cella della foto grande e ne esce in basso: con
+   un margine negativo la griglia lo rimetteva in riga sotto, senza toccarla. */
+.hz-tappi-piccola{
+ grid-column:5/9;grid-row:1;align-self:end;aspect-ratio:3/2;
+ transform:translate(-22%,45%);
+ outline:clamp(6px,.8vw,12px) solid #141012;z-index:1;
+}
+.hz-tappi{padding-bottom:calc(var(--sec-y) + 9vw)}
+.hz-tappi-testo{grid-column:9/13;grid-row:1;align-self:center;padding-left:clamp(0px,1vw,20px)}
+.hz-tappi-testo h2{margin:14px 0 26px}
+.hz-tappi-testo p{font-size:var(--testo);margin-bottom:14px}
+.hz-tappi-testo .text-link{margin-top:14px;color:var(--hz-testo)}
+
+/* --- Collezioni: il respiro avorio, con le tre tessere colorate --------- */
+.hz-collezioni{background:var(--paper)}
+
+/* --- Maison: petrolio Give, foto a vivo, l'anno che scavalca ------------- */
+.hz-maison{
+ padding:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+ background:
+  radial-gradient(60% 70% at 100% 100%, color-mix(in oklab, var(--fragranza) 55%, transparent), transparent 70%),
+  var(--hz-fondo);
+}
+.hz-maison-foto{min-height:clamp(520px,52vw,860px)}
+.hz-maison-foto img{object-position:62% 50%}
+.hz-maison-testo{padding:var(--sec-y) var(--pad-x);align-self:center;max-width:640px}
+.hz-anno{display:flex;flex-direction:column;gap:4px;margin:0 0 clamp(22px,3vw,40px)}
+.hz-anno span{font-size:10px;letter-spacing:.18em;color:var(--hz-testo-2)}
+.hz-anno b{
+ font:italic 400 clamp(96px,12vw,200px)/.86 var(--serif);letter-spacing:-.05em;
+ color:color-mix(in oklab, var(--fragranza) 50%, #f3ede5);
+ margin-left:calc(var(--pad-x) * -1 - clamp(40px,6vw,110px));
+ text-shadow:0 2px 30px rgba(6,20,20,.45);
+}
+.hz-maison h2{margin-bottom:26px}
+.hz-maison-testo p{font-size:var(--testo);margin-bottom:14px}
+.hz-maison .text-link{margin-top:12px;color:var(--hz-testo)}
+
+/* --- Incontro: terracotta Trust, la foto del discovery che esce ---------- */
+.hz-incontro{
+ background:
+  radial-gradient(60% 80% at 20% 0%, color-mix(in oklab, var(--fragranza) 55%, transparent), transparent 70%),
+  color-mix(in oklab, var(--fragranza) 34%, var(--palco));
+ padding-bottom:0;z-index:2;
+}
+.hz-incontro .hz-dentro{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--gap);align-items:end}
+.hz-incontro-testo{padding-bottom:var(--sec-y)}
+.hz-incontro h2{font-size:clamp(48px,6.6vw,112px);line-height:.94;margin:16px 0 34px}
+.hz-incontro figure{
+ aspect-ratio:1/1;margin-bottom:calc(var(--sec-y) * -.6);
+ box-shadow:0 30px 60px -20px color-mix(in oklab, var(--palco) 70%, #000);
+}
+
+/* --- Instagram: le foto del laboratorio, non piu' solo un link ----------- */
+.hz-instagram{background:var(--paper);color:var(--text);padding-top:calc(var(--sec-y) * 1.3)}
+.hz-instagram .eyebrow{color:var(--text-3)}
+.hz-instagram p{color:var(--text-2);font-size:var(--testo)}
+.hz-instagram h2{font-size:var(--d3);margin:8px 0 10px}
+.hz-instagram-testa{display:flex;justify-content:space-between;align-items:flex-end;gap:var(--gap);flex-wrap:wrap;margin-bottom:clamp(26px,3vw,44px)}
+.hz-instagram-foto{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(8px,1vw,16px)}
+.hz-instagram-foto img{aspect-ratio:3/4;transition:transform .8s var(--ease),filter .5s ease}
+.hz-instagram-foto img:nth-child(even){margin-top:clamp(20px,4vw,64px)}
+.hz-instagram-foto img.hz-a-sinistra{object-position:22% 50%}
+.hz-instagram-foto:hover img{filter:saturate(1.08)}
+.hz-instagram-foto img:hover{transform:translateY(-6px)}
+
+/* --- Il footer passa all'inchiostro: la pagina si chiude, non sfuma ------ */
+footer{background:#1b1716;color:var(--on-ink)}
+.footer-top{border-bottom-color:rgba(239,236,228,.14)}
+.footer-top p{color:var(--on-ink-2)}
+.footer-links span{color:color-mix(in oklab, var(--on-ink-2) 70%, transparent)}
+.footer-links a{color:var(--on-ink-2)}
+.footer-links a:hover{color:var(--on-ink)}
+.footer-bottom{border-top-color:rgba(239,236,228,.14);color:color-mix(in oklab, var(--on-ink-2) 80%, transparent)}
+footer .text-link{color:var(--on-ink)}
+
+@media (max-width:900px){
+ .hz-manifesto .hz-dentro{grid-template-columns:1fr}
+ .hz-tappi-grande{grid-column:1/-1;grid-row:1}
+ .hz-tappi{padding-bottom:var(--sec-y)}
+ .hz-tappi-piccola{grid-column:5/13;grid-row:1;transform:translate(0,55%)}
+ .hz-tappi-testo{grid-column:1/-1;grid-row:2;margin-top:calc(22vw + 20px)}
+ .hz-maison{grid-template-columns:1fr}
+ .hz-maison-foto{min-height:0;aspect-ratio:4/3}
+ .hz-anno b{margin-left:0;margin-top:calc(var(--sec-y) * -1 - .35em)}
+ .hz-incontro .hz-dentro{grid-template-columns:1fr}
+ .hz-incontro-testo{padding-bottom:0}
+ .hz-incontro figure{margin-bottom:calc(var(--sec-y) * -.5);width:82%;justify-self:end}
+ .hz-instagram-foto{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:560px){
+ /* Su telefono le pietre vanno su due righe: niente scavalco, restano
+    dentro al manifesto, se no la seconda riga copre la foto dei tappi. */
+ .hz-manifesto{--pietra:42px;padding-bottom:var(--sec-y)}
+ .hz-pietre{position:static;margin-top:30px;padding:0;gap:10px 6px}
+ .hz-tappi{padding-top:var(--sec-y)}
+ .hz-pietre span{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+ .hz-pietre img,.hz-instagram-foto img{transition:none}
+}
+
+/* Fra 761 e 1260 px le cinque voci del menu finivano sotto il logo centrato
+   («La maison» sopra «Zavyla» a 1024). Le ultime due restano nel menu ≡,
+   che su desktop c'e' sempre. */
+@media (min-width:761px) and (max-width:1260px){
+ header nav a:nth-child(n+4){display:none}
+}
+
+/* ===================== LE NOTE E IL QUIZ (R145) =========================
+   Stesso difetto della vecchia home: elenchi crema con filature. Qui ogni
+   voce prende il colore del suo tappo (--fragranza / --palco in linea da
+   pages-extra.js) e la pietra diventa grande, tagliata dal bordo. */
+
+.note-indice{
+ grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));
+ gap:clamp(8px,1vw,14px);
+}
+.note-voce{
+ position:relative;overflow:hidden;isolation:isolate;
+ grid-template-columns:1fr auto;align-items:start;
+ min-height:clamp(170px,15vw,230px);padding:clamp(20px,2vw,28px);
+ border:0;color:#f3ede5;
+ background:
+  radial-gradient(80% 90% at 100% 100%, color-mix(in oklab, var(--fragranza) 60%, transparent), transparent 70%),
+  color-mix(in oklab, var(--palco,#2a2422) 70%, #120e10);
+ transition:transform .5s var(--ease);
+}
+.note-voce:hover{padding-left:clamp(20px,2vw,28px);transform:translateY(-3px)}
+.note-voce img{
+ position:absolute;right:-14%;bottom:-26%;z-index:-1;
+ width:clamp(130px,12vw,190px);height:auto;aspect-ratio:1;border-radius:50%;
+ filter:drop-shadow(0 18px 30px rgba(0,0,0,.45));
+ transition:transform .9s var(--ease);
+}
+.note-voce:hover img{transform:rotate(-14deg) scale(1.06)}
+.note-voce h2{font-size:clamp(26px,2.4vw,36px);color:#f6f1ea}
+.note-voce p{
+ margin-top:10px;max-width:22ch;font-size:10.5px;line-height:1.6;
+ color:color-mix(in oklab, #f3ede5 72%, transparent);
+}
+.note-voce span{color:#f3ede5;font-size:16px}
+
+/* Il quiz: ogni domanda e' una fascia nel colore di una fragranza, le
+   risposte sono tessere che si accendono quando le scegli. */
+.section:has(>.quiz){max-width:none;padding-inline:0;padding-bottom:0}
+.quiz{max-width:none;padding:0;gap:0;justify-items:stretch}
+.quiz-passo{
+ margin:0;min-width:0;
+ --spazio:max(var(--pad-x), calc((100% - var(--maxw)) / 2 + var(--pad-x)));
+ padding:clamp(40px,5vw,76px) var(--spazio);color:#f3ede5;
+ display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.6fr);gap:clamp(20px,3vw,56px);align-items:center;
+ background:
+  radial-gradient(60% 120% at 0% 50%, color-mix(in oklab, var(--fragranza) 46%, transparent), transparent 70%),
+  color-mix(in oklab, var(--palco,#2a2422) 72%, #120e10);
+}
+/* Il legend non entra nella griglia di un fieldset: si fa scorrere come
+   blocco normale e si mette nella prima colonna con float. */
+.quiz-passo legend{
+ float:left;width:100%;margin:0;
+ display:flex;flex-direction:column;align-items:flex-start;gap:6px;
+ font-family:var(--serif);font-size:clamp(28px,2.8vw,44px);line-height:1.05;color:#f6f1ea;
+}
+.quiz-passo legend span{
+ font:italic 400 clamp(54px,6vw,96px)/.9 var(--serif);
+ color:color-mix(in oklab, var(--fragranza) 55%, #f3ede5);
+}
+.quiz-scelte{grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(6px,.7vw,10px)}
+.quiz-scelte label{
+ min-height:clamp(64px,5.4vw,84px);padding:16px 18px;
+ border:1px solid color-mix(in oklab, #f3ede5 22%, transparent);
+ background:color-mix(in oklab, #000 18%, transparent);
+ color:color-mix(in oklab, #f3ede5 82%, transparent);font-size:15px;
+}
+.quiz-scelte label:hover{border-color:color-mix(in oklab, #f3ede5 55%, transparent);color:#fff}
+.quiz-scelte input{border-color:color-mix(in oklab, #f3ede5 60%, transparent)}
+.quiz-scelte input:checked{border:5px solid var(--ink)}
+.quiz-scelte label:has(input:checked){
+ background:color-mix(in oklab, var(--fragranza) 22%, #f3ede5);border-color:transparent;color:var(--ink);
+}
+.quiz-scelte input:focus-visible{outline-color:#f3ede5}
+.quiz>.btn,.quiz-avviso{
+ margin:clamp(30px,4vw,56px) max(var(--pad-x), calc((100% - var(--maxw)) / 2 + var(--pad-x))) 0;justify-self:start;
+}
+.quiz-avviso{margin-top:14px}
+.quiz{padding-bottom:clamp(40px,5vw,80px)}
+
+@media (max-width:900px){
+ .quiz-passo{grid-template-columns:1fr}
+ .quiz-passo legend{margin-bottom:18px}
+ .quiz-scelte{clear:both}
+}
+@media (max-width:560px){
+ .quiz-scelte{grid-template-columns:1fr}
+}
+/* La griglia stava gia' dentro una .section con i suoi margini: il secondo
+   rientro la staccava dal titolo (40 px di bordo su telefono). */
+.section>.note-indice{padding-inline:0}
+
+/* ===================== FONDI MARMORIZZATI (R147) ========================
+   Regola di Stefano: nessuna sezione a tinta unita, il fondo somiglia ai
+   tappi. `--marmo` arriva in linea dal markup (marmo.js): la texture vera
+   del tappo, o il riflesso a fasce per i due tappi in metallo. Sopra c'e' un
+   velo scuro che serve SOLO a leggere il testo: piu' denso dove sta il testo
+   (a sinistra), piu' leggero altrove, cosi' la resina resta viva.
+   R153: Stefano vuole le venature «quasi in trasparenza». Il velo scuro da
+   solo non basta: piu' lo si alza, piu' la sezione diventa nera. Quindi tra il
+   marmo e il velo scuro c'e' un velo del COLORE DELLA SEZIONE che lascia
+   passare solo `--venatura` della resina: il fondo resta della sua tinta e le
+   venature affiorano appena. */
+.marmo.marmo,.note-voce,.quiz-passo,.banda-scura.distesa,.banda-scura:not(.fragrance-showcase),footer{
+ --velo:.56;--venatura:.12;
+ --tinta-fondo:color-mix(in oklab, var(--palco,#221f1b) 70%, #120e10);
+ background:
+  radial-gradient(130% 110% at 12% 45%, rgb(12 9 11 / calc(var(--velo) * .6 + .1)), rgb(12 9 11 / calc(var(--velo) * .6 - .2)) 72%),
+  linear-gradient(color-mix(in oklab, var(--tinta-fondo), transparent calc(var(--venatura) * 100%)) 0 0),
+  var(--marmo, none) 50% 50% / var(--marmo-misura, cover) no-repeat,
+  var(--tinta-fondo);
+}
+footer{--marmo:url(assets/fondi/promise.webp);--velo:.8}
+.hz-tappi.marmo{--velo:.7}
+.hz-incontro.marmo{--velo:.5}
+.hz-maison.marmo{--velo:.5}
+.note-voce{--velo:.42}
+.quiz-passo{--velo:.5;--venatura:.07}
+
+/* ---- Le collezioni: trittico a tutta pagina ---------------------------- */
+.hz-collezioni{padding:0;position:relative;background:#120e10;color:#f3ede5}
+.hz-collezioni-testa{
+ position:absolute;inset:0 0 auto;z-index:3;pointer-events:none;
+ display:flex;justify-content:space-between;align-items:flex-end;gap:var(--gap);flex-wrap:wrap;
+ padding:clamp(36px,4vw,64px) var(--pad-x) 0;
+}
+.hz-collezioni-testa h2{font-size:var(--d2);color:#f6f1ea;text-shadow:0 2px 24px rgb(0 0 0 / .35)}
+.hz-collezioni-testa .text-link{pointer-events:auto;color:#f3ede5}
+.hz-trittico{display:flex;min-height:clamp(640px,88vh,920px)}
+.hz-pannello{
+ --velo:.4;position:relative;flex:1 1 0;min-width:0;overflow:hidden;isolation:isolate;
+ display:flex;flex-direction:column;justify-content:space-between;
+ padding:calc(clamp(36px,4vw,64px) + clamp(80px,8vw,124px)) clamp(22px,2.4vw,40px) clamp(28px,3vw,44px);
+ transition:flex-grow .9s var(--ease);
+}
+.hz-pannello+.hz-pannello{box-shadow:inset 1px 0 0 rgb(255 255 255 / .1)}
+.hz-trittico:hover .hz-pannello{flex-grow:.82}
+.hz-trittico .hz-pannello:hover,.hz-trittico .hz-pannello:focus-within{flex-grow:1.45}
+.hz-pannello-tutto{position:absolute;inset:0;z-index:1}
+.hz-pannello-tutto:focus-visible{outline:2px solid #f3ede5;outline-offset:-8px}
+.hz-pannello-testa{position:relative;z-index:2;pointer-events:none}
+.hz-pannello h3{font-size:clamp(36px,3.6vw,62px);line-height:.98;margin-top:12px;color:#f6f1ea}
+.hz-pannello h3 em{color:color-mix(in oklab, var(--fragranza) 40%, #f3ede5)}
+.hz-pannello img{
+ position:absolute;left:50%;bottom:clamp(76px,8vw,118px);z-index:1;pointer-events:none;
+ height:min(50%,480px);width:auto;transform:translateX(-50%);
+ filter:drop-shadow(0 40px 46px rgb(0 0 0 / .55));
+ transition:transform .9s var(--ease);
+}
+.hz-pannello:hover img{transform:translateX(-50%) translateY(-10px) scale(1.04)}
+.hz-pannello ul{position:relative;z-index:2;list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:2px 16px}
+.hz-pannello li a{font:italic 400 clamp(16px,1.2vw,19px)/1.6 var(--serif);color:color-mix(in oklab, #f3ede5 78%, transparent);transition:color .3s ease}
+.hz-pannello li a:hover{color:#fff}
+@media (max-width:900px){
+ .hz-trittico{flex-direction:column;min-height:0}
+ .hz-collezioni-testa{position:relative;padding-bottom:28px}
+ .hz-pannello{min-height:clamp(480px,120vw,620px);padding-top:clamp(28px,6vw,44px)}
+ .hz-trittico:hover .hz-pannello,.hz-trittico .hz-pannello:hover{flex-grow:1}
+ .hz-pannello+.hz-pannello{box-shadow:inset 0 1px 0 rgb(255 255 255 / .1)}
+ .hz-pannello img{height:min(58%,380px)}
+}
+@media (prefers-reduced-motion:reduce){.hz-pannello,.hz-pannello img{transition:none}}
+/* Leggibilita' sui marmi chiari (Speak, Enjoy, Listen sono quasi bianchi):
+   le risposte del quiz prendono un vetro scuro proprio, le tessere delle
+   note un velo piu' denso e un'ombra sotto le lettere. */
+.note-voce{--velo:.55}
+.note-voce h2,.note-voce p{text-shadow:0 1px 14px rgb(8 6 7 / .7)}
+.quiz-scelte label:not(:has(input:checked)){
+ background:rgb(14 10 12 / .62);
+ -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+}
+.quiz-passo legend{text-shadow:0 2px 20px rgb(8 6 7 / .65)}
+/* Il tappo di Promise e' nero: il suo colore non puo' tingere un corsivo
+   su fondo scuro. */
+.hz-tappi h2 em{color:#d8c7a4}
+
+.hz-collezioni.marmo{--velo:.72}
+
+/* ====================== PROFUMI E COLLEZIONI (R149) =====================
+   Il flacone di Forgive con le materie che volano stava in fondo alla pagina
+   Collezioni: il cliente lo vuole come apertura della pagina Profumi. Il
+   fondo resta quello della scena (#f0eee7): la tela WebGL pulisce con quel
+   colore, un fondo diverso le metterebbe un bordo attorno. */
+.profumi-apertura{
+ display:grid;grid-template-columns:minmax(0,1fr);align-items:center;
+ max-width:var(--maxw);margin-inline:auto;padding:clamp(20px,3vw,40px) var(--pad-x) 0;gap:var(--gap);
+}
+.profumi-apertura-testo h1{font-size:clamp(42px,5.4vw,88px);line-height:.98;margin:clamp(18px,2vw,28px) 0}
+.profumi-apertura-testo p{font-size:var(--guida);color:var(--text-2);max-width:44ch}
+.profumi-apertura .feature-visual{min-height:clamp(440px,48vw,700px)}
+@media (max-width:900px){
+ .profumi-apertura{grid-template-columns:1fr}
+ .profumi-apertura .feature-visual{min-height:clamp(380px,100vw,560px)}
+}
+/* La pagina Collezioni apre direttamente con il trittico. */
+.hz-collezioni-pagina .hz-collezioni-testa h1{font-size:clamp(46px,6vw,96px);line-height:.96;margin-top:14px;color:#f6f1ea}
+.hz-collezioni-pagina .hz-collezioni-testa p{margin-top:12px;color:color-mix(in oklab,#f3ede5 78%,transparent);font-size:var(--guida)}
+.hz-collezioni-pagina .hz-pannello{padding-top:calc(clamp(36px,4vw,64px) + clamp(170px,15vw,230px))}
+@media (max-width:900px){.hz-collezioni-pagina .hz-pannello{padding-top:clamp(28px,6vw,44px)}}
+/* Il flacone nel flusso del pannello, non piu' assoluto: con il titolo
+   grande della pagina Collezioni finiva sopra «Collection». Ora testa,
+   flacone e nomi si dividono l'altezza e non possono sovrapporsi. */
+.hz-pannello img{
+ position:relative;left:auto;bottom:auto;transform:none;
+ flex:1 1 auto;min-height:0;width:100%;height:auto;max-height:min(52vh,500px);
+ object-fit:contain;margin:clamp(16px,2vw,28px) 0;
+}
+.hz-pannello:hover img{transform:translateY(-8px) scale(1.03)}
+.hz-collezioni-pagina .hz-trittico{min-height:max(100vh,860px)}
+.hz-collezioni-pagina .hz-pannello{padding-top:calc(clamp(36px,4vw,64px) + clamp(210px,17vw,260px))}
+@media (max-width:900px){
+ .hz-pannello img{max-height:340px}
+ .hz-collezioni-pagina .hz-trittico{min-height:0}
+ .hz-collezioni-pagina .hz-pannello{padding-top:clamp(28px,6vw,44px)}
+}
+.hz-maison.marmo{--velo:.62;--venatura:.07}
+.hz-incontro.marmo{--velo:.56}
+
+/* ====================== LE TESSERE «VETRINA» (R155) ======================
+   Stefano: «ogni profumo della sezione profumi deve avere questo stile» --
+   il flacone con le sue materie in volo su fondo chiaro, come la scena di
+   Forgive. Le tessere del catalogo sono ora quelle foto (assets/vetrina,
+   rese da scripts/catalogo-vetrina/). Il fondo deve essere ESATTAMENTE quello
+   della scena (#f0eee7 in fragrance-worlds.js), altrimenti attorno alla foto
+   si vede un bordo; il velo delle materie prime in «screen» va spento, su
+   un fondo chiaro non si vedrebbe e sporcherebbe solo. Etichetta e + tornano
+   scuri su chiaro. Il flacone singolo in apertura e' stato tolto: Stefano
+   non intendeva quello. */
+.profumi-apertura{padding-bottom:clamp(8px,1vw,16px)}
+.profumi-apertura-testo{max-width:62ch}
+.product-image:has(.catalog-live){background:#f0eee7;color:var(--ink)}
+.product-image:has(.catalog-live)::after{content:none}
+.product-image:has(.catalog-live) .catalog-collection{color:var(--text-3);text-shadow:none}
+.product-image:has(.catalog-live) .catalog-loading{color:var(--text-3)}
+.product-image:has(.catalog-live) .quick{
+ border-color:color-mix(in oklab,var(--ink) 30%, transparent);color:var(--ink);
+ background:color-mix(in oklab,#f0eee7 70%, transparent);
+}
+.product-image:has(.catalog-live) .quick:hover{background:var(--ink);color:#f0eee7}
+
+/* ===================== I FLACONI NUOVI (R163) ===========================
+   Fuori dal 3D il flacone e' ora il render attuale scontornato
+   (assets/flaconi, proporzione 1:2). Nelle miniature di bag e ricerca
+   `cover` gli tagliava il tappo: va contenuto, non riempito. */
+.cart-row img,.search-item img{object-fit:contain;padding-block:4px}
+
+/* ======================= IL TELEFONO (R166) =============================
+   Un giro di tutte le pagine a 390px: nessuna sbordava, ma il telefono
+   chiedeva altro. Testi fino a 9px, link alti 20px, menu e bag in una
+   scatola sospesa che tagliava le ultime voci, catalogo a una colonna
+   lungo nove schermate, selettori a 13,5px che su iPhone fanno zoomare
+   la pagina al tocco. Qui solo regole per lo schermo stretto. */
+@media(max-width:760px){
+ /* La fascia dell'annuncio si ritira quando la pagina si muove: restano
+    i 66px dell'intestazione, non i 104 di prima. */
+ .announcement{font-size:11px}
+ .announcement a{display:flex;align-items:center;justify-content:center;height:36px;padding:0 16px}
+ .topbar{transition:transform .35s var(--ease)}
+ body.scrolled .topbar{transform:translateY(-36px)}
+
+ /* Menu, ricerca e bag diventano fogli a tutto schermo. */
+ dialog,#menu{
+  width:100%!important;max-width:100%!important;height:100dvh;max-height:100dvh;margin:0;
+  padding:14px var(--pad-x) calc(32px + env(safe-area-inset-bottom));
+  overflow-y:auto;overscroll-behavior:contain;
+ }
+ .menu-collezioni{grid-template-columns:1fr 1fr;gap:26px 18px}
+ .menu-collezioni ul{gap:0}
+ .menu-collezioni a:not(.menu-titolo),.menu-pagine a{display:flex;align-items:center;min-height:44px;font-size:16px}
+ .menu-pagine{grid-template-columns:1fr 1fr;gap:0 18px}
+ .search-label{font-size:11px}
+
+ /* Il catalogo a due colonne, come si sfoglia una vetrina dal telefono.
+    Il piede della tessera ripeteva il link del nome: lo si toglie. */
+ .product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:36px 12px}
+ .product-info{flex-direction:column;gap:2px;padding-top:12px}
+ .product-info h3{font-size:22px;margin:6px 0 4px}
+ .catalog-tagline{font-size:14.5px}
+ .price{padding-top:4px;font-size:13px}
+ .catalog-card-foot{display:none}
+ .catalog-collection{top:10px;left:12px;font-size:10px;letter-spacing:.12em}
+ .catalog-family{font-size:10px;letter-spacing:.12em}
+ .quick{right:6px;bottom:6px;width:44px;height:44px}
+
+ /* Nessun testo sotto i 10,5px. */
+ .exp-intro .eyebrow,.footer-links span,.rotation-hint,.fragrance-atmosphere-note,
+ .brand-place,.gift-card label.small,.hz-anno span,.notes span{font-size:10.5px}
+ .note-voce p{font-size:11.5px}
+
+ /* Sotto i 16px Safari ingrandisce la pagina quando si tocca il campo. */
+ input,select,textarea{font-size:16px}
+
+ /* La scheda prodotto: il nome e il prezzo affiorano gia' nella prima
+    schermata, sotto il flacone. */
+ .detail-art{min-height:56svh}
+
+ /* Nella bag i pulsanti della quantita' erano di 34px, Rimuovi di 13. */
+ .cart-row .quantity button{width:44px;height:44px}
+ .remove{padding:12px 0 12px 12px;margin:-12px 0 -12px -12px}
+
+ /* Le schede del catalogo: 44px di tocco, filatura dentro la scheda. */
+ .tabs button{padding:13px 0}
+ .tabs button::after{bottom:4px}
+}
+
+/* Su un touchscreen i link a testo restano uguali a vista ma si toccano su
+   44px: l'area in piu' e' uno pseudo-elemento trasparente. */
+@media(pointer:coarse){
+ .text-link::before,.breadcrumb::before,.hz-pannello li a::before,.footer-bottom a::before{
+  content:'';position:absolute;inset:-10px -6px;
+ }
+ .breadcrumb,.hz-pannello li a,.footer-bottom a{position:relative}
+ .hz-pannello li a{display:inline-block;padding:4px 0}
+ .solo-tastiera{display:none}
+}
+
+/* ===================== IL LOGOTIPO VERO (R167) ==========================
+   Il marchio era il corsivo del sito scritto come testo: non e' il logo di
+   Zavyla. Ora e' la firma ufficiale (logotipo_zavyla.png di zavyla.com),
+   usata come maschera: prende il colore del testo, quindi resta scura
+   sulla carta e chiara nel piede scuro senza due file diversi. La firma e'
+   alta per via dell'occhiello della y: si misura in larghezza. */
+.logo-firma{
+ display:block;aspect-ratio:1200/745;background:currentColor;
+ -webkit-mask:url(assets/zavyla/logotipo-firma.webp?v=R167) center/contain no-repeat;
+ mask:url(assets/zavyla/logotipo-firma.webp?v=R167) center/contain no-repeat;
+}
+header>.logo{font:inherit;line-height:0}
+header>.logo .logo-firma{width:108px}
+.footer-top .logo{font:inherit;line-height:0}
+.footer-top .logo .logo-firma{width:clamp(150px,14vw,220px)}
+.dialog-head .logo{font:inherit;line-height:0}
+.dialog-head .logo .logo-firma{width:100px}
+@media(max-width:760px){
+ header>.logo .logo-firma{width:92px}
+}
+
+/* ===================== UNA FASCIA CREMA FRA DUE COLORI (R167) ===========
+   Regola di Stefano: mai due sezioni di colore diverso una dopo l'altra,
+   in mezzo sempre una sezione crema che smorza. La home ne aveva sei
+   colorate di fila (vetrina, manifesto, tappi, collezioni, maison,
+   incontro), il quiz quattro, Matrimonio e Rivenditori finivano con la
+   banda viola attaccata al piede scuro.
+   Home ora: crema · VETRINA · crema (manifesto) · TAPPI · crema con le
+   tre collezioni come tessere · crema (maison) · INCONTRO · crema · PIEDE. */
+
+/* Manifesto e maison passano alla carta. Le specificita' battono
+   `.marmo.marmo`, che stende il marmo su tutte le sezioni. */
+.hz.hz-manifesto.marmo,.hz.hz-maison.marmo{
+ --hz-testo:var(--text);--hz-testo-2:var(--text-2);
+ background:var(--paper);
+}
+.hz-manifesto h2 em,.hz-maison h2 em{color:color-mix(in oklab, var(--fragranza) 78%, var(--ink))}
+.hz-manifesto .eyebrow,.hz-maison .eyebrow,.hz-maison .hz-anno span{color:var(--text-3)}
+.hz-maison .hz-anno b{color:color-mix(in oklab, var(--fragranza) 80%, var(--ink));text-shadow:none}
+
+/* Le collezioni: i tre pannelli restano nel loro colore, ma come tessere
+   staccate su una cornice crema; il titolo esce dal marmo e sta sopra. */
+.hz.hz-collezioni.marmo{
+ background:var(--paper);color:var(--text);
+ padding:var(--sec-y) var(--pad-x);
+}
+.hz-collezioni .hz-collezioni-testa{
+ position:relative;inset:auto;pointer-events:auto;
+ max-width:var(--maxw);margin:0 auto clamp(26px,3vw,44px);padding:0;
+}
+.hz-collezioni .hz-collezioni-testa h1,.hz-collezioni .hz-collezioni-testa h2{color:var(--ink);text-shadow:none}
+.hz-collezioni-pagina .hz-collezioni-testa p{color:var(--text-2)}
+.hz-collezioni .hz-collezioni-testa .eyebrow{color:var(--text-3)}
+.hz-collezioni .hz-collezioni-testa .text-link{color:var(--text)}
+.hz-collezioni .hz-trittico{max-width:var(--maxw);margin-inline:auto;gap:clamp(10px,1.2vw,18px);min-height:clamp(560px,74vh,820px)}
+.hz-collezioni .hz-pannello,.hz-collezioni-pagina .hz-pannello{padding-top:clamp(30px,3vw,48px)}
+.hz-pannello+.hz-pannello{box-shadow:none}
+.hz-collezioni-pagina .hz-trittico{min-height:clamp(600px,80vh,860px)}
+@media (max-width:900px){
+ .hz-collezioni .hz-trittico{flex-direction:column;min-height:0;gap:clamp(24px,7vw,36px)}
+ .hz-collezioni .hz-pannello{padding-top:clamp(28px,6vw,44px)}
+}
+
+/* Una pagina che finisce con una banda colorata non la attacca al piede. */
+main>.banda-scura.distesa:last-child{margin-bottom:var(--sec-y)}
+
+/* ======================= IL QUIZ A PASSI (R170) =========================
+   Una domanda alla volta su un solo palco: il palco prende il colore della
+   domanda e alla fine quello della fragranza uscita, con il suo flacone.
+   Una sola fascia colorata fra l'introduzione e il piede, entrambe chiare. */
+.quiz-sezione{padding-top:0}
+.quiz-palco{
+ --spazio:max(var(--pad-x), calc((100% - var(--maxw)) / 2 + var(--pad-x)));
+ position:relative;color:#f3ede5;
+ min-height:clamp(520px,68svh,720px);scroll-margin-top:72px;
+ padding:clamp(26px,3.2vw,48px) var(--spazio) clamp(44px,5.4vw,84px);
+ display:flex;flex-direction:column;
+}
+.quiz-palco [hidden]{display:none!important}
+.quiz-testa{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px 20px;margin-bottom:clamp(30px,4.4vw,64px)}
+.quiz-barre{grid-column:1/-1;list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.quiz-barre li{height:2px;background:rgb(243 237 229 / .2);position:relative;overflow:hidden}
+.quiz-barre li::after{content:'';position:absolute;inset:0;background:#f3ede5;transform:scaleX(0);transform-origin:left;transition:transform .55s var(--ease)}
+.quiz-barre li.fatto::after{transform:scaleX(1)}
+.quiz-avanzamento{margin:0;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:rgb(243 237 229 / .74)}
+.quiz-indietro{grid-column:2;min-height:44px;padding:0 2px;font-size:13px;color:#f3ede5;opacity:.8;transition:opacity .25s ease}
+.quiz-indietro:hover{opacity:1}
+.quiz-indietro:focus-visible{outline:2px solid #f3ede5;outline-offset:2px}
+
+/* La domanda */
+.quiz-palco .quiz-passo{
+ background:none;padding:0;margin:auto 0;width:100%;
+ display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.4fr);gap:clamp(24px,4vw,72px);align-items:center;
+}
+.quiz-palco .quiz-passo:focus{outline:none}
+.quiz-palco .quiz-passo legend{font-size:clamp(30px,3.2vw,50px)}
+.quiz-palco .quiz-passo legend span{font-size:clamp(64px,7vw,120px)}
+.quiz-palco .quiz-scelte{grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(8px,.8vw,12px)}
+.quiz-palco .quiz-scelte label{
+ min-height:clamp(84px,7vw,112px);padding:18px 22px;gap:16px;
+ font:italic 400 clamp(19px,1.55vw,23px)/1.25 var(--serif);
+ transition:background .3s ease,border-color .3s ease,color .3s ease,transform .2s ease;
+}
+.quiz-palco .quiz-scelte label:active{transform:scale(.985)}
+.quiz-palco .quiz-scelte input{width:18px;height:18px}
+.quiz-palco .quiz-scelte input:checked{border-width:6px}
+.quiz-palco .quiz-avviso{margin:18px 0 0;color:#f5cbbd}
+@media (prefers-reduced-motion:no-preference){
+ .quiz-passo.entra legend,.quiz-passo.entra .quiz-scelte label,.quiz-esito:not([hidden])>*{animation:quiz-entra .55s var(--ease) both}
+ .quiz-passo.entra .quiz-scelte label:nth-child(2){animation-delay:.05s}
+ .quiz-passo.entra .quiz-scelte label:nth-child(3){animation-delay:.1s}
+ .quiz-passo.entra .quiz-scelte label:nth-child(4){animation-delay:.15s}
+ .quiz-esito:not([hidden])>:nth-child(2){animation-delay:.12s}
+}
+@keyframes quiz-entra{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* Il risultato */
+.quiz-palco .quiz-esito{
+ margin:auto 0;border:0;padding:0;
+ display:grid;grid-template-columns:minmax(0,.75fr) minmax(0,1.25fr);gap:clamp(24px,4vw,80px);align-items:center;
+}
+.quiz-esito-flacone{display:grid;place-items:center}
+.quiz-esito-flacone img{width:auto;height:min(58svh,520px);max-width:100%;object-fit:contain;filter:drop-shadow(0 30px 40px rgb(0 0 0 / .35))}
+.quiz-esito-testo .brand-place{display:block;color:rgb(243 237 229 / .72)}
+.quiz-esito-testo h2{font-size:clamp(60px,7.4vw,124px);line-height:.98;letter-spacing:-.03em;margin:14px 0 20px;color:#f6f1ea}
+.quiz-esito-testo h2:focus{outline:none}
+.quiz-palco .quiz-esito-famiglia{margin:0;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:color-mix(in oklab, var(--fragranza) 45%, #f3ede5)}
+.quiz-palco .quiz-esito .quiz-esito-tagline{margin:10px 0 0;font:italic 400 clamp(21px,1.8vw,27px)/1.3 var(--serif);color:#f3ede5}
+.quiz-esito-note{margin:clamp(22px,2.6vw,34px) 0 0;display:grid;gap:12px;max-width:52ch}
+.quiz-esito-note div{display:grid;grid-template-columns:9.5em 1fr;gap:16px;align-items:baseline}
+.quiz-esito-note dt{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgb(243 237 229 / .62)}
+.quiz-palco .quiz-esito .quiz-esito-note dd{margin:0;font-size:15px;line-height:1.5;color:rgb(243 237 229 / .9)}
+.quiz-esito-azioni{display:flex;flex-wrap:wrap;align-items:center;gap:16px 30px;margin-top:clamp(26px,3vw,40px)}
+.quiz-palco .btn{background:#f3ede5;color:var(--ink);border-color:#f3ede5}
+.quiz-palco .btn:hover{background:#fff;border-color:#fff}
+.quiz-esito-azioni .text-link{color:#f3ede5}
+.quiz-vicine{margin-top:clamp(30px,3.6vw,52px);padding-top:clamp(18px,2vw,26px);border-top:1px solid rgb(243 237 229 / .2)}
+.quiz-vicine .brand-place{color:rgb(243 237 229 / .72)}
+.quiz-vicine ul{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:14px 40px}
+.quiz-vicine a{display:flex;align-items:center;gap:14px;min-height:44px;color:#f3ede5}
+.quiz-vicine img{width:auto;height:78px}
+.quiz-vicine b{display:block;font:400 22px/1.1 var(--serif)}
+.quiz-vicine small{display:block;margin-top:4px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgb(243 237 229 / .62)}
+.quiz-vicine a:hover b{text-decoration:underline;text-underline-offset:4px}
+
+@media (max-width:900px){
+ .quiz-palco{min-height:0}
+ .quiz-palco .quiz-passo{grid-template-columns:1fr;gap:22px}
+ .quiz-palco .quiz-esito{grid-template-columns:1fr;gap:18px}
+ .quiz-esito-flacone img{height:min(42svh,340px)}
+}
+@media (max-width:560px){
+ .quiz-palco .quiz-scelte{grid-template-columns:1fr}
+ .quiz-palco .quiz-scelte label{min-height:68px;font-size:19px}
+ .quiz-palco .quiz-passo legend span{font-size:60px}
+ .quiz-esito-note div{grid-template-columns:1fr;gap:2px}
+ .quiz-esito-testo h2{font-size:64px}
 }
